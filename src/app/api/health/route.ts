@@ -4,8 +4,14 @@ const GAS_URL = process.env.GAS_URL;
 const GAS_SECRET_TOKEN = process.env.GAS_SECRET_TOKEN;
 
 export async function GET() {
-  if (!GAS_URL || !GAS_SECRET_TOKEN) {
-    return NextResponse.json({ status: 'error', message: 'ไม่ได้ตั้งค่า GAS_URL หรือ Token' }, { status: 500 });
+  if (!GAS_URL) {
+    return NextResponse.json({ status: 'error', message: 'ERROR: ระบบตรวจไม่พบตัวแปร GAS_URL ใน Environment Variables' }, { status: 200 });
+  }
+  if (!GAS_SECRET_TOKEN) {
+    return NextResponse.json({ status: 'error', message: 'ERROR: ระบบตรวจไม่พบตัวแปร GAS_SECRET_TOKEN ใน Environment Variables' }, { status: 200 });
+  }
+  if (!process.env.JWT_SECRET) {
+    return NextResponse.json({ status: 'error', message: 'ERROR: ระบบตรวจไม่พบตัวแปร JWT_SECRET ใน Environment Variables' }, { status: 200 });
   }
 
   try {
