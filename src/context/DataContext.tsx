@@ -164,7 +164,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
     const res = await mutate(status === 'Active' ? 'ISSUE_DIRECT' : 'ADD', 'Transactions', transaction);
     return res.success;
-  }, [mutate, equipments]);
+  }, [mutate]);
 
   const approveTransaction = useCallback(async (txId: string) => {
     const tx = transactions.find((t: any) => t.TransactionID === txId);
@@ -172,7 +172,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
     const res = await mutate('APPROVE_ISSUE', 'Transactions', { TransactionID: txId });
     return res.success;
-  }, [mutate, transactions, equipments]);
+  }, [mutate, transactions]);
 
   const rejectTransaction = useCallback(async (txId: string) => {
     const tx = transactions.find((t: any) => t.TransactionID === txId);
@@ -187,7 +187,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
     const res = await mutate('RETURN_ASSET', 'Transactions', { TransactionID: txId });
     return res.success;
-  }, [mutate, transactions, equipments]);
+  }, [mutate, transactions]);
 
   const refreshData = async () => {
     await refetch();

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, QrCode, History, Send } from 'lucide-react';
 import clsx from 'clsx';
 import { useData } from '@/context/DataContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
