@@ -121,13 +121,13 @@ export default function UsersPage() {
     }
 
     // Target the appropriate sheet
-    const success = editingUser ? await updateRecord(currentSheet, payload) : await createRecord(currentSheet, payload);
+    const res = editingUser ? await updateRecord(currentSheet, payload) : await createRecord(currentSheet, payload);
 
-    if (success) {
+    if (res.success) {
       toast.success(editingUser ? 'แก้ไขข้อมูลสำเร็จ' : 'เพิ่มข้อมูลสำเร็จ');
       closeModal();
     } else {
-      setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+      setErrorMsg(res.error || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
     }
     setIsSubmitting(false);
   };
@@ -143,8 +143,8 @@ export default function UsersPage() {
     }
 
     if (!confirm(`คุณต้องการลบผู้ใช้งาน "${username}" ใช่หรือไม่?`)) return;
-    const success = await deleteRecord(currentSheet, { Username: username });
-    if (success) toast.success('ลบผู้ใช้งานสำเร็จ');
+    const res = await deleteRecord(currentSheet, { Username: username });
+    if (res.success) toast.success('ลบผู้ใช้งานสำเร็จ');
     else toast.error('ไม่สามารถลบผู้ใช้งานได้');
   };
 

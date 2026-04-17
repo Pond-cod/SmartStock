@@ -170,12 +170,12 @@ export default function EquipmentsPage() {
   const onSubmit = async (data: EquipmentForm) => {
     setIsSubmitting(true);
     setErrorMsg('');
-    const success = editingEq ? await updateRecord('Equipments', data) : await createRecord('Equipments', data);
-    if (success) {
+    const res = editingEq ? await updateRecord('Equipments', data) : await createRecord('Equipments', data);
+    if (res.success) {
       toast.success(editingEq ? `แก้ไขข้อมูล "${data.Name}" สำเร็จ` : `เพิ่มพัสดุ "${data.Name}" เข้าสู่ระบบแล้ว`);
       closeModal();
     } else {
-      setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง');
+      setErrorMsg(res.error || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง');
     }
     setIsSubmitting(false);
   };
@@ -183,11 +183,11 @@ export default function EquipmentsPage() {
   const handleDelete = async (eq: any) => {
     if (!canEdit) return;
     if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบพัสดุ "${eq.Name}" (${eq.EquipmentCode})?`)) {
-      const success = await deleteRecord('Equipments', { EquipmentCode: eq.EquipmentCode });
-      if (success) {
+      const res = await deleteRecord('Equipments', { EquipmentCode: eq.EquipmentCode });
+      if (res.success) {
         toast.success('ลบข้อมูลพัสดุเรียบร้อยแล้ว');
       } else {
-        toast.error('ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+        toast.error(res.error || 'ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
       }
     }
   };

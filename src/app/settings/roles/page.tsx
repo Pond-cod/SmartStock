@@ -81,9 +81,11 @@ export default function RolesPermissionsPage() {
     if (!roleData) return;
 
     setSavingRole(roleName);
-    const success = await updateRecord('RolePermissions', roleData);
-    if (success) {
+    const res = await updateRecord('RolePermissions', roleData);
+    if (res.success) {
       toast.success(`บันทึกสิทธิ์สำหรับ "${roleName}" สำเร็จ`);
+    } else {
+      toast.error(res.error || 'ไม่สามารถบันทึกข้อมูลได้');
     }
     setSavingRole(null);
   };
@@ -101,8 +103,9 @@ export default function RolesPermissionsPage() {
 
     const newRole: any = { RoleName: name };
     MODULES.forEach(m => newRole[m.id] = 'view'); // Default permission
-    const success = await createRecord('RolePermissions', newRole);
-    if (success) toast.success(`สร้างสิทธิ์สำหรับ Role "${name}" สำเร็จ`);
+    const res = await createRecord('RolePermissions', newRole);
+    if (res.success) toast.success(`สร้างสิทธิ์สำหรับ Role "${name}" สำเร็จ`);
+    else toast.error(res.error || 'ไม่สามารถสร้าง Role ได้');
   };
 
   const handleAddRolePrompt = async () => {
@@ -116,8 +119,9 @@ export default function RolesPermissionsPage() {
       return;
     }
     if (confirm(`คุณต้องการลบ Role "${roleName}" ใช่หรือไม่?`)) {
-      const success = await deleteRecord('RolePermissions', { RoleName: roleName });
-      if (success) toast.success('ลบ Role สำเร็จ');
+      const res = await deleteRecord('RolePermissions', { RoleName: roleName });
+      if (res.success) toast.success('ลบ Role สำเร็จ');
+      else toast.error(res.error || 'ไม่สามารถลบ Role ได้');
     }
   };
 

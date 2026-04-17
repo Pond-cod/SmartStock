@@ -64,13 +64,13 @@ export default function CategoriesPage() {
       return;
     }
 
-    const success = editingCat ? await updateRecord("Categories", data) : await createRecord("Categories", data);
+    const res = editingCat ? await updateRecord("Categories", data) : await createRecord("Categories", data);
 
-    if (success) {
+    if (res.success) {
       toast.success(editingCat ? 'แก้ไขหมวดหมู่สำเร็จ' : 'เพิ่มหมวดหมู่ใหม่สำเร็จ');
       closeModal();
     } else {
-      setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+      setErrorMsg(res.error || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
     }
     setIsSubmitting(false);
   };
@@ -83,8 +83,8 @@ export default function CategoriesPage() {
     }
 
     if (!confirm(`คุณต้องการลบหมวดหมู่ "${name}" ใช่หรือไม่?`)) return;
-    const success = await deleteRecord("Categories", { CategoryID: id });
-    if (success) toast.success('ลบหมวดหมู่สำเร็จ');
+    const res = await deleteRecord("Categories", { CategoryID: id });
+    if (res.success) toast.success('ลบหมวดหมู่สำเร็จ');
     else toast.error('ไม่สามารถลบหมวดหมู่ได้');
   };
 

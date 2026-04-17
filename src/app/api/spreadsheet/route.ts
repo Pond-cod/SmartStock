@@ -88,7 +88,6 @@ export async function POST(request: Request) {
     let body = await request.json();
     const { action, sheet, data } = body;
 
-    const ALLOWED_SHEETS_ARR = [...ALLOWED_SHEETS];
     if (!sheet || !ALLOWED_SHEETS.has(sheet)) {
       return NextResponse.json({ error: 'ไม่สามารถใช้งาน Sheet นี้ได้' }, { status: 400 });
     }

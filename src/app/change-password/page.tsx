@@ -27,13 +27,13 @@ export default function ChangePasswordPage() {
     setErrorMsg('');
 
     try {
-      const success = await updateRecord("Users", {
+      const res = await updateRecord("Users", {
         Username: currentUser.Username,
         Password: data.newPassword,
         MustChangePassword: 'FALSE'
       });
 
-      if (success) {
+      if (res.success) {
         toast.success('เปลี่ยนรหัสผ่านสำเร็จแล้ว กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
         setTimeout(async () => {
           await logout();

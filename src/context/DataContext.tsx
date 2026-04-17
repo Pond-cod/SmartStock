@@ -24,9 +24,9 @@ type DataContextType = {
   lastConnectedAt: Date | null;
   refreshData: () => Promise<void>;
   hasPermission: (role: string, module: string, action?: 'view' | 'create' | 'edit' | 'delete' | 'approve') => boolean;
-  createRecord: (sheet: string, data: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
-  updateRecord: (sheet: string, data: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
-  deleteRecord: (sheet: string, idData: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
+  createRecord: (sheet: string, data: any) => Promise<{ success: boolean; error?: string; isRequest?: boolean; message?: string }>;
+  updateRecord: (sheet: string, data: any) => Promise<{ success: boolean; error?: string; isRequest?: boolean; message?: string }>;
+  deleteRecord: (sheet: string, idData: any) => Promise<{ success: boolean; error?: string; isRequest?: boolean; message?: string }>;
   issueAsset: (data: { EquipmentCode: string; Quantity: number; ReceiverName: string; IssuerName: string; ReturnDate?: string }, isAdmin?: boolean) => Promise<boolean>;
   approveTransaction: (transactionId: string) => Promise<boolean>;
   rejectTransaction: (transactionId: string) => Promise<boolean>;

@@ -47,13 +47,13 @@ export default function SettingsPage() {
     setIsSaving(true);
     setMessage({ text: '', type: '' });
     const payload = { ID: 1, ThemeColor: themeColor, TextColor: textColor, FontSize: fontSize };
-    let success = (settings && settings.ID) ? await updateRecord("Settings", { ...payload, ID: settings.ID }) : await createRecord("Settings", payload);
+    let res = (settings && settings.ID) ? await updateRecord("Settings", { ...payload, ID: settings.ID }) : await createRecord("Settings", payload);
 
-    if (success) {
+    if (res.success) {
       setMessage({ text: 'บันทึกการตั้งค่าสำเร็จ ข้อมูลจะถูกนำไปใช้โดยอัตโนมัติ', type: 'success' });
       await refreshData();
     } else {
-      setMessage({ text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', type: 'error' });
+      setMessage({ text: res.error || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', type: 'error' });
     }
     setIsSaving(false);
   };
