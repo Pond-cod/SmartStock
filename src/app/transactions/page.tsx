@@ -15,7 +15,7 @@ export default function TransactionsPage() {
   const [filterType, setFilterType] = useState<'ALL' | 'ISSUE' | 'RETURN' | 'PENDING'>('ALL');
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  const isAdmin = currentUser?.Role === 'Admin' || currentUser?.Role === 'admin_approve';
+  const isAdmin = currentUser?.Role === 'Admin' || currentUser?.Role === 'admin_approve' || currentUser?.Role === 'super Admin';
 
   const filteredTransactions = useMemo(() => {
     return transactions

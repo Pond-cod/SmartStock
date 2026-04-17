@@ -40,10 +40,11 @@ export default function IssueModal({ equipment, onClose }: IssueModalProps) {
       
       IssuerName: currentUser?.Username || 'system',
       ReturnDate: data.ReturnDate,
-    }, currentUser?.Role === 'Admin');
+    }, currentUser?.Role === 'Admin' || currentUser?.Role === 'super Admin');
 
     if (success) {
-      toast.success('ทำรายการเบิกพัสดุสำเร็จ' + (currentUser?.Role === 'Admin' ? '' : ' (รอการอนุมัติจากผู้ดูแล)'));
+      const isAdminActor = currentUser?.Role === 'Admin' || currentUser?.Role === 'super Admin';
+      toast.success('ทำรายการเบิกพัสดุสำเร็จ' + (isAdminActor ? '' : ' (รอการอนุมัติจากผู้ดูแล)'));
       onClose();
     } else {
       toast.error('ไม่สามารถทำรายการได้ กรุณาลองใหม่อีกครั้ง');
