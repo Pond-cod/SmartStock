@@ -8,14 +8,15 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
-  { name: 'แดชบอร์ด',        href: '/',             icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'หมวดหมู่',        href: '/categories',   icon: Layers,          roles: ['Admin', 'admin_approve'] },
-  { name: 'รายการพัสดุ',     href: '/equipments',   icon: Package,         roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ประวัติเบิก-คืน',  href: '/transactions', icon: History,         roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'รายงานสรุป',      href: '/reports',      icon: BarChart3,       roles: ['Admin', 'admin_approve'] },
-  { name: 'สแกน QR Code',   href: '/qr-scan',      icon: QrCode,          roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ข้อมูลหลัก',       href: '/master-data',  icon: Users,           roles: ['Admin'] },
-  { name: 'ผู้ใช้งานระบบ',     href: '/users',        icon: Factory,         roles: ['Admin'] },
+  { name: 'แดชบอร์ด', href: '/', icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'หมวดหมู่', href: '/categories', icon: Layers, roles: ['Admin', 'admin_approve'] },
+  { name: 'รายการพัสดุ', href: '/equipments', icon: Package, roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'ทำรายการเบิก', href: '/requisition', icon: Send, roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'ประวัติเบิก-คืน', href: '/transactions', icon: History, roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'รายงานสรุป', href: '/reports', icon: BarChart3, roles: ['Admin', 'admin_approve'] },
+  { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'ข้อมูลหลัก', href: '/master-data', icon: Users, roles: ['Admin'] },
+  { name: 'ผู้ใช้งานระบบ', href: '/users', icon: Factory, roles: ['Admin'] },
 ];
 
 export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen: boolean, setMobileOpen: (v: boolean) => void }) {
@@ -32,7 +33,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
           </div>
           <div className="md:hidden lg:block">
             <p className="text-sm font-black text-white tracking-tight">ระบบบริหารพัสดุ</p>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">v1.2 Smart Storage</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">smart-stock</p>
           </div>
         </Link>
         <button
@@ -67,7 +68,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
       <div className="p-3 border-t border-white/5 space-y-1">
         <div className="flex items-center gap-3 px-3 py-4 rounded-2xl bg-white/5 mb-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white shadow-inner flex-shrink-0">
-             {currentUser?.Username?.slice(0, 2).toUpperCase() || 'AD'}
+            {currentUser?.Username?.slice(0, 2).toUpperCase() || 'AD'}
           </div>
           <div className="min-w-0 md:hidden lg:block leading-tight">
             <p className="text-xs font-bold text-white truncate">{currentUser?.Username}</p>
@@ -90,7 +91,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
         )}
 
         <div className="pt-4 px-3 md:hidden lg:block">
-           <p className="text-[9px] text-slate-600 font-bold text-center tracking-tighter">Powered by Industrial Edition</p>
+          <p className="text-[9px] text-slate-600 font-bold text-center tracking-tighter">Powered by DeeDevIOT</p>
         </div>
       </div>
     </div>

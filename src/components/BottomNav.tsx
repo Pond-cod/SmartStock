@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, QrCode, History, Layers } from 'lucide-react';
+import { LayoutDashboard, Package, QrCode, History, Send } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 
@@ -12,11 +12,11 @@ export default function BottomNav() {
   const userRole = currentUser?.Role || 'user';
 
   const items = [
-    { name: 'หน้าหลัก', href: '/', icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'พัสดุ',   href: '/equipments', icon: Package, roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'สแกน',   href: '/qr-scan', icon: QrCode, roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'ประวัติ', href: '/transactions', icon: History, roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'หมวดหมู่', href: '/categories', icon: Layers, roles: ['Admin', 'admin_approve'] },
+    { name: 'หน้าหลัก', href: '/',            icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
+    { name: 'พัสดุ',    href: '/equipments',   icon: Package,         roles: ['Admin', 'admin_approve', 'user'] },
+    { name: 'เบิกพัสดุ', href: '/requisition',  icon: Send,            roles: ['Admin', 'admin_approve', 'user'] },
+    { name: 'สแกน',    href: '/qr-scan',       icon: QrCode,          roles: ['Admin', 'admin_approve', 'user'] },
+    { name: 'ประวัติ',  href: '/transactions',  icon: History,         roles: ['Admin', 'admin_approve', 'user'] },
   ];
 
   return (
