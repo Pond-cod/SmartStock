@@ -163,14 +163,4 @@ export default function MasterDataPage() {
       )}
     </div>
   );
-}"w-full p-3 rounded-xl border-2 border-slate-100 focus:border-primary outline-none" /></div>
-                  <div className="pt-4 flex gap-3"><button type="button" onClick={closeModal} className="flex-1 py-3 font-bold text-slate-400 hover:bg-slate-100 rounded-2xl transition-all">ยกเลิก</button><button type="submit" disabled={isSubmitting} className="flex-1 py-3 font-black text-white bg-primary rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2">{isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}บันทึก</button></div>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }

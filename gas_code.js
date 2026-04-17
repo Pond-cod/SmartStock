@@ -129,7 +129,7 @@ function doPost(e) {
   
   // Mapping internal names to actual sheet names in the spreadsheet
   const nameMap = {
-    'Personnel': 'พนักงาน',
+    'Personnel': 'Personnel', // User renamed back to English
     'Departments': 'Departments',
     'RolePermissions': 'RolePermissions'
   };
