@@ -70,11 +70,11 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
               <item.icon className={clsx('w-5 h-5 flex-shrink-0', pathname === item.href ? 'text-white' : 'text-slate-400 group-hover:text-white')} />
               <span className="text-sm font-semibold md:hidden lg:block truncate">{item.name}</span>
             </div>
-            
+
             {item.module === 'Approvals' && actionRequests.filter((r: any) => r.Status === 'Pending').length > 0 && (
-               <div className="md:hidden lg:flex w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center text-[10px] font-black animate-pulse">
-                 {actionRequests.filter((r: any) => r.Status === 'Pending').length}
-               </div>
+              <div className="md:hidden lg:flex w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center text-[10px] font-black animate-pulse">
+                {actionRequests.filter((r: any) => r.Status === 'Pending').length}
+              </div>
             )}
           </Link>
         ))}
@@ -119,7 +119,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
         )}
 
         <div className="pt-4 px-3 md:hidden lg:block">
-          <p className="text-[9px] text-slate-600 font-bold text-center tracking-tighter">Powered by DeeDevIOT</p>
+          <p className="text-[9px] text-slate-600 font-bold text-center tracking-tighter">Powered by DeeDevIOT.</p>
         </div>
       </div>
     </div>
