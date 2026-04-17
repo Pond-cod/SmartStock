@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2 } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -11,10 +11,10 @@ const navItems = [
   { name: 'แดชบอร์ด',        href: '/',             icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
   { name: 'หมวดหมู่',        href: '/categories',   icon: Layers,          roles: ['Admin', 'admin_approve'] },
   { name: 'รายการพัสดุ',     href: '/equipments',   icon: Package,         roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ประวัติเบิก-คืน',  href: '/transactions', icon: History,        roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'ประวัติเบิก-คืน',  href: '/transactions', icon: History,         roles: ['Admin', 'admin_approve', 'user'] },
+  { name: 'รายงานสรุป',      href: '/reports',      icon: BarChart3,       roles: ['Admin', 'admin_approve'] },
   { name: 'สแกน QR Code',   href: '/qr-scan',      icon: QrCode,          roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'จัดการบุคลากร',    href: '/personnel',    icon: Users,           roles: ['Admin'] },
-  { name: 'จัดการแผนก',      href: '/departments',  icon: Building2,       roles: ['Admin'] },
+  { name: 'ข้อมูลหลัก',       href: '/master-data',  icon: Users,           roles: ['Admin'] },
   { name: 'ผู้ใช้งานระบบ',     href: '/users',        icon: Factory,         roles: ['Admin'] },
 ];
 

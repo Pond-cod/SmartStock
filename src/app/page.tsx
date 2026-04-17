@@ -4,7 +4,7 @@ import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import {
   Package, AlertTriangle, CheckCircle2, XCircle, BarChart3,
-  ArrowUpRight, QrCode, ClipboardList, Activity, Layers, RefreshCw
+  ArrowUpRight, QrCode, ClipboardList, Activity, Layers, RefreshCw, TrendingUp
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import Link from 'next/link';
@@ -130,8 +130,8 @@ export default function DashboardPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="kpi-card animate-pulse">
               <div className="w-12 h-12 rounded-xl bg-slate-200" />
               <div className="flex-1 space-y-2">
@@ -142,7 +142,7 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
           <KpiCard
             title="พัสดุทั้งหมด"
             value={stats.total}
@@ -172,6 +172,13 @@ export default function DashboardPage() {
             icon={<AlertTriangle className="w-6 h-6 text-amber-700" />}
             accent="bg-amber-600"
             trend={stats.lowStock > 0 ? { label: 'สต็อกต่ำ', up: false } : undefined}
+          />
+          <KpiCard
+            title="มูลค่าพัสดุรวม"
+            value={`฿${stats.totalValue.toLocaleString('th-TH', { maximumFractionDigits: 0 })}`}
+            sub="มูลค่าสินทรัพย์ทั้งหมด"
+            icon={<TrendingUp className="w-6 h-6 text-purple-700" />}
+            accent="bg-purple-600 border border-purple-100"
           />
         </div>
       )}

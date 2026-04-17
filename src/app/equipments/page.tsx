@@ -341,9 +341,13 @@ export default function EquipmentsPage() {
                   <label className="block text-xs font-black text-slate-500 uppercase mb-1 ml-1">ราคาต่อหน่วย (บาท)</label>
                   <input type="number" step="0.01" {...register('PricePerUnit')} className={inputCls(false)} />
                 </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-1 ml-1">สถานที่เก็บ / ห้อง</label>
+                  <input {...register('Location')} placeholder="เช่น ห้องพัสดุ, ชั้น 2, ตู้ A3" className={inputCls(false)} />
+                </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-1 ml-1">สถานที่เก็บ / หมายเหตุ</label>
-                  <textarea {...register('Notes')} rows={2} className={inputCls(false)} placeholder="ระบุตำแหน่งที่ตั้ง หรือ ข้อมูลเพิ่มเติม"></textarea>
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-1 ml-1">หมายเหตุ</label>
+                  <textarea {...register('Notes')} rows={2} className={inputCls(false)} placeholder="ข้อมูลเพิ่มเติม เช่น รุ่น, ยี่ห้อ, เลขซีเรียล"></textarea>
                 </div>
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
