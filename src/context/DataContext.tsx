@@ -14,12 +14,14 @@ type DataContextType = {
   personnel: any[];
   departments: any[];
   transactions: any[];
+  rolePermissions: any[];
   settings: any;
   isLoading: boolean;
   error: string | null;
   connStatus: ConnStatus;
   lastConnectedAt: Date | null;
   refreshData: () => Promise<void>;
+  hasPermission: (role: string, module: string, action?: 'view' | 'create' | 'edit' | 'delete' | 'approve') => boolean;
   createRecord: (sheet: string, data: any) => Promise<boolean>;
   updateRecord: (sheet: string, data: any) => Promise<boolean>;
   deleteRecord: (sheet: string, idData: any) => Promise<boolean>;
