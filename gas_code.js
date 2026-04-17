@@ -156,8 +156,24 @@ function doPost(e) {
     } catch(e) { console.error("Audit log failed", e); }
   };
 
+  const ensureHeaders = (sh, dataKeys) => {
+    const shHeaders = sh.getDataRange().getValues()[0];
+    const newHeaders = [...shHeaders];
+    let changed = false;
+    dataKeys.forEach(k => {
+      if (newHeaders.indexOf(k) === -1 && k !== 'token' && k !== 'caller' && k !== 'action' && k !== 'sheet') {
+        newHeaders.push(k);
+        changed = true;
+      }
+    });
+    if (changed) {
+      sh.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+    }
+    return newHeaders;
+  };
+
   if (action === 'ADD') {
-    const headers = sheet.getDataRange().getValues()[0];
+    const headers = ensureHeaders(sheet, Object.keys(data));
     const newRow = headers.map(h => {
       if (h === 'CreatedAt' && !data[h]) {
         return new Date().toISOString();
@@ -194,7 +210,7 @@ function doPost(e) {
   };
 
   if (action === 'EDIT') {
-    const headers = sheet.getDataRange().getValues()[0];
+    const headers = ensureHeaders(sheet, Object.keys(data));
     const rows = sheet.getDataRange().getValues();
     const idField = getIdField(sheetName);
     const rowId = data[idField];
@@ -209,12 +225,16 @@ function doPost(e) {
     
     if (rowIndex > -1) {
        const currentRowValues = rows[rowIndex - 1];
+       // Ensure currentRowValues has the same length as current (potentially expanded) headers
+       const expandedRowValues = new Array(headers.length).fill("");
+       currentRowValues.forEach((v, i) => expandedRowValues[i] = v);
+
        headers.forEach((h, i) => {
           if (data[h] !== undefined && h !== 'CreatedAt') {
-             currentRowValues[i] = data[h];
+             expandedRowValues[i] = data[h];
           }
        });
-       sheet.getRange(rowIndex, 1, 1, headers.length).setValues([currentRowValues]);
+       sheet.getRange(rowIndex, 1, 1, headers.length).setValues([expandedRowValues]);
        cache.remove("all_data_json");
        writeAuditLog();
        return ContentService.createTextOutput(JSON.stringify({success: true, message: "Updated successfully"})).setMimeType(ContentService.MimeType.JSON);
