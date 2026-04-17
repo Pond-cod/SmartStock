@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { Shield, Plus, Save, Trash2, Check, X, AlertCircle } from 'lucide-react';
+import { Shield, Plus, Save, Trash2, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
 
 const MODULES = [
