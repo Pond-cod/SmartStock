@@ -6,8 +6,8 @@ import { verifyToken } from '@/lib/jwt';
 const GAS_URL = process.env.GAS_URL;
 const GAS_SECRET_TOKEN = process.env.GAS_SECRET_TOKEN;
 
-const ALLOWED_SHEETS = new Set(['Categories', 'Equipments', 'Users', 'Settings', 'Transactions', 'ALL', 'Personnel', 'Departments', 'RolePermissions']);
-const ADMIN_ONLY_WRITE_SHEETS = new Set(['Users', 'Settings', 'Personnel', 'Departments', 'RolePermissions']);
+const ALLOWED_SHEETS = new Set(['Categories', 'Equipments', 'Users', 'Settings', 'Transactions', 'ALL', 'Personnel', 'Departments', 'RolePermissions', 'super Admin']);
+const ADMIN_ONLY_WRITE_SHEETS = new Set(['Users', 'Settings', 'Personnel', 'Departments', 'RolePermissions', 'super Admin']);
 
 async function fetchGASWithRetry(url: string, options?: any, retries = 3): Promise<Response> {
   for (let i = 0; i < retries; i++) {

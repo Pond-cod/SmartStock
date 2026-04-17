@@ -42,10 +42,15 @@ export async function POST(request: Request) {
       );
     }
 
-    let users: any[];
+    let users: any[] = [];
+    let superAdmins: any[] = [];
     try {
-      const res = await fetchGASWithRetry(`${GAS_URL}?sheet=Users&token=${GAS_SECRET_TOKEN}`);
-      users = await res.json();
+      const [resUsers, resSuper] = await Promise.all([
+        fetchGASWithRetry(`${GAS_URL}?sheet=Users&token=${GAS_SECRET_TOKEN}`),
+        fetchGASWithRetry(`${GAS_URL}?sheet=super%20Admin&token=${GAS_SECRET_TOKEN}`)
+      ]);
+      users = await resUsers.json();
+      superAdmins = await resSuper.json();
     } catch (err: any) {
       return NextResponse.json(
         { success: false, error: 'ระบบฐานข้อมูลไม่ตอบสนอง กรุณาลองใหม่อีกครั้ง' },
@@ -53,14 +58,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!Array.isArray(users)) {
-      return NextResponse.json(
-        { success: false, error: 'รูปแบบข้อมูลจากฐานข้อมูลไม่ถูกต้อง: ' + JSON.stringify(users) },
-        { status: 500 }
-      );
-    }
+    if (!Array.isArray(users)) users = [];
+    if (!Array.isArray(superAdmins)) superAdmins = [];
 
-    const user = users.find((u: any) =>
+    const allAccounts = [...users, ...superAdmins];
+
+    const user = allAccounts.find((u: any) =>
       String(u.Username).toLowerCase() === String(username).toLowerCase()
     );
 

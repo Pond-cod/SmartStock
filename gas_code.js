@@ -131,7 +131,8 @@ function doPost(e) {
   const nameMap = {
     'Personnel': 'Personnel', // User renamed back to English
     'Departments': 'Departments',
-    'RolePermissions': 'RolePermissions'
+    'RolePermissions': 'RolePermissions',
+    'super Admin': 'super Admin'
   };
   
   const actualSheetName = nameMap[sheetName] || sheetName;
@@ -206,6 +207,7 @@ function doPost(e) {
     if (sName === 'Departments') return 'DepartmentID';
     if (sName === 'Transactions') return 'TransactionID';
     if (sName === 'RolePermissions') return 'RoleName';
+    if (sName === 'super Admin') return 'Username';
     return null;
   };
 

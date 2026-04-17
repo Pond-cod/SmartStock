@@ -118,7 +118,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   }, [allData]);
 
   const hasPermission = useCallback((role: string, module: string, action: 'view' | 'create' | 'edit' | 'delete' | 'approve' = 'view') => {
-    if (role === 'Admin') return true; // Super admin always has full access
+    if (role === 'Admin' || role === 'super Admin') return true; // Hardcoded full access for admins
     const permission = rolePermissions.find((p: any) => p.RoleName === role);
     if (!permission) return false;
     
