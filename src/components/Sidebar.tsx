@@ -24,7 +24,8 @@ const navItems = [
 export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen: boolean, setMobileOpen: (v: boolean) => void }) {
   const pathname = usePathname();
   const { currentUser } = useAuth();
-  const { hasPermission } = useData();
+  const dataContext = useData();
+  const { hasPermission, actionRequests } = dataContext;
   const userRole = currentUser?.Role || 'user';
 
   const SidebarContent = () => (
@@ -70,9 +71,9 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
               <span className="text-sm font-semibold md:hidden lg:block truncate">{item.name}</span>
             </div>
             
-            {item.module === 'Approvals' && useData().actionRequests.filter(r => r.Status === 'Pending').length > 0 && (
+            {item.module === 'Approvals' && actionRequests.filter((r: any) => r.Status === 'Pending').length > 0 && (
                <div className="md:hidden lg:flex w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center text-[10px] font-black animate-pulse">
-                 {useData().actionRequests.filter(r => r.Status === 'Pending').length}
+                 {actionRequests.filter((r: any) => r.Status === 'Pending').length}
                </div>
             )}
           </Link>

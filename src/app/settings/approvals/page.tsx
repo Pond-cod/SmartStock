@@ -211,7 +211,7 @@ export default function ApprovalCenterPage() {
           <h4 className="font-bold text-amber-800 text-sm">หมายเหตุลำดับสิทธิ์การอนุมัติ</h4>
           <ul className="text-xs text-amber-700/80 mt-1 space-y-1 list-disc ml-4">
             <li>คำขอจากระดับ <strong>User</strong>: จะต้องได้รับอนุมัติจาก <strong>admin_approve</strong> หรื่อสูงกว่า</li>
-            <li>คำขอ "ลบข้อมูล" จากระดับ <strong>admin_approve</strong>: จะต้องได้รับการอนุมัติจาก <strong>Admin</strong> เท่านั้น</li>
+            <li>คำขอ &quot;ลบข้อมูล&quot; จากระดับ <strong>admin_approve</strong>: จะต้องได้รับการอนุมัติจาก <strong>Admin</strong> เท่านั้น</li>
             <li>การอนุมัติจะส่งผลต่อฐานข้อมูลหลักทันที ไม่สามารถย้อนกลับได้</li>
           </ul>
         </div>
