@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
