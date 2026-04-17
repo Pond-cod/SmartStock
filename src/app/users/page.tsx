@@ -224,12 +224,16 @@ export default function UsersPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
-                  <button onClick={() => openModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <button 
+                    onClick={() => openModal(user)} 
+                    disabled={!isSuper && user.Role === 'Admin'}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30"
+                  >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleDelete(user.Username)} 
-                    disabled={(activeTab === 'standard' && user.Username === 'admin') || (activeTab === 'super' && user.Username === currentUser.Username)}
+                    disabled={(activeTab === 'standard' && user.Username === 'admin') || (activeTab === 'super' && user.Username === currentUser.Username) || (!isSuper && user.Role === 'Admin')}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
                   >
                     <Trash2 className="w-4 h-4" />

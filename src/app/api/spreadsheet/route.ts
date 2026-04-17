@@ -92,8 +92,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'ไม่สามารถใช้งาน Sheet นี้ได้' }, { status: 400 });
     }
 
-    if (ADMIN_ONLY_WRITE_SHEETS.has(sheet) && callerRole !== 'Admin') {
-      return NextResponse.json({ error: 'ผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถแก้ไขข้อมูลส่วนนี้ได้' }, { status: 403 });
+    const SUPER_ADMIN_ONLY_SHEETS = new Set(['RolePermissions', 'super Admin', 'Settings']);
+
+    if (ADMIN_ONLY_WRITE_SHEETS.has(sheet) && callerRole !== 'Admin' && callerRole !== 'super Admin') {
+      return NextResponse.json({ error: 'ไม่ได้รับอนุญาตให้แก้ไขข้อมูลส่วนนี้' }, { status: 403 });
+    }
+
+    if (SUPER_ADMIN_ONLY_SHEETS.has(sheet) && callerRole !== 'super Admin') {
+      return NextResponse.json({ error: 'Super Admin เท่านั้นที่สามารถแก้ไขข้อมูลส่วนนี้ได้' }, { status: 403 });
     }
 
     if ((sheet === 'Users' || sheet === 'super Admin') && data?.Password) {

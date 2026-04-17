@@ -41,7 +41,7 @@ export default function RolesPermissionsPage() {
     }
   }, [rolePermissions, isLoading]);
 
-  if (!currentUser || currentUser.Role !== 'Admin') return null;
+  if (!currentUser || currentUser.Role !== 'super Admin') return null;
 
   // Filter out roles in User list that are not in RolePermissions
   const systemRoles = Array.from(new Set(users.map((u: any) => u.Role)))

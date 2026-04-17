@@ -78,7 +78,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
           </div>
         </div>
 
-        {userRole === 'Admin' && (
+        {userRole === 'super Admin' && (
           <>
             <Link
               href="/settings/roles"
