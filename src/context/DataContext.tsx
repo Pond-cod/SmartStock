@@ -45,15 +45,22 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const reactQueryClient = useQueryClient();
   const [connStatus, setConnStatus] = useState<ConnStatus>('idle');
   const [lastConnectedAt, setLastConnectedAt] = useState<Date | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!Cookies.get('auth_token'));
 
   // Check auth status on mount and listen for login events
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await fetch('/api/auth/me');
-        if (res.ok) setIsAuthenticated(true);
-      } catch { /* not authenticated */ }
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch {
+        setIsAuthenticated(false);
+      }
     };
     checkAuth();
 
