@@ -2,6 +2,7 @@
 import React, {
   createContext, useContext, useState, useCallback, ReactNode, useEffect
 } from 'react';
+import Cookies from 'js-cookie';
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 type ConnStatus = 'idle' | 'connected' | 'error';
