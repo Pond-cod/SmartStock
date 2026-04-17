@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.Password);
+    const isValid = await bcrypt.compare(String(password), String(user.Password));
     if (!isValid) {
       return NextResponse.json(
         { success: false, error: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง' },
