@@ -96,9 +96,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'ผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถแก้ไขข้อมูลส่วนนี้ได้' }, { status: 403 });
     }
 
-    if (sheet === 'Users' && data?.Password) {
+    if ((sheet === 'Users' || sheet === 'super Admin') && data?.Password) {
       if (!data.Password.startsWith('$2a$')) {
-        data.Password = await bcrypt.hash(data.Password, 10);
+        data.Password = await bcrypt.hash(String(data.Password), 10);
       }
     }
 

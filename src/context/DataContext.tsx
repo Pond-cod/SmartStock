@@ -107,6 +107,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const categories = React.useMemo(() => Array.isArray(allData?.Categories) ? allData.Categories : [], [allData]);
   const equipments = React.useMemo(() => Array.isArray(allData?.Equipments) ? allData.Equipments : [], [allData]);
   const users = React.useMemo(() => Array.isArray(allData?.Users) ? allData.Users : [], [allData]);
+  const superAdmins = React.useMemo(() => Array.isArray(allData?.['super Admin']) ? allData['super Admin'] : [], [allData]);
   const personnel = React.useMemo(() => Array.isArray(allData?.Personnel) ? allData.Personnel : [], [allData]);
   const departments = React.useMemo(() => Array.isArray(allData?.Departments) ? allData.Departments : [], [allData]);
   const transactions = React.useMemo(() => Array.isArray(allData?.Transactions) ? allData.Transactions : [], [allData]);
@@ -197,7 +198,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      categories, equipments, users, personnel, departments, transactions, rolePermissions, settings,
+      categories, equipments, users, superAdmins, personnel, departments, transactions, rolePermissions, settings,
       isLoading: isLoading && !allData, // Show loading only if we have no offline placeholder
       error: queryError ? queryError.message : null,
       connStatus: queryError ? 'error' : connStatus,

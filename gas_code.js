@@ -47,7 +47,8 @@ function doGet(e) {
       Personnel: getSheetData('Personnel'),
       Departments: getSheetData('Departments'),
       Transactions: getSheetData('Transactions'),
-      RolePermissions: getSheetData('RolePermissions')
+      RolePermissions: getSheetData('RolePermissions'),
+      'super Admin': getSheetData('super Admin')
     };
     
     const resultJson = JSON.stringify(result);

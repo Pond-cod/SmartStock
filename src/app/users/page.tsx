@@ -23,24 +23,30 @@ const inputCls = (hasError: boolean) =>
   }`;
 
 export default function UsersPage() {
-  const { users, personnel, isLoading, createRecord, updateRecord, deleteRecord } = useData();
+  const { users, superAdmins, personnel, isLoading, createRecord, updateRecord, deleteRecord, rolePermissions } = useData();
   const { currentUser } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
+  const [activeTab, setActiveTab] = useState<'standard' | 'super'>('standard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserForm>();
+  // Authorized if Admin or super Admin
+  const isAuthorized = currentUser && (currentUser.Role === 'Admin' || currentUser.Role === 'super Admin');
+  const isSuper = currentUser?.Role === 'super Admin';
 
   useEffect(() => {
-    if (currentUser && currentUser.Role !== 'Admin') router.push('/');
-  }, [currentUser, router]);
+    if (currentUser && !isAuthorized) router.push('/');
+  }, [currentUser, isAuthorized, router]);
 
-  if (!currentUser || currentUser.Role !== 'Admin') return null;
+  if (!currentUser || !isAuthorized) return null;
+
+  const currentSheet = activeTab === 'standard' ? 'Users' : 'super Admin';
+  const displayUsers = activeTab === 'standard' ? users : superAdmins;
 
   const openModal = (user: any = null) => {
     setEditingUser(user);
@@ -53,7 +59,15 @@ export default function UsersPage() {
         Surname: user.Surname || user.LastName || '' 
       });
     }
-    else reset({ Username: '', Password: '', Role: 'user', name: '', Surname: '' });
+    else {
+      reset({ 
+        Username: '', 
+        Password: '', 
+        Role: activeTab === 'super' ? 'super Admin' : 'user', 
+        name: '', 
+        Surname: '' 
+      });
+    }
     setErrorMsg('');
     setShowPassword(false);
     setIsModalOpen(true);
@@ -67,7 +81,6 @@ export default function UsersPage() {
       
       setValue('name', fn);
       setValue('Surname', ln);
-      // Auto-generate username from firstname if creating new user
       if (!editingUser) {
         const generatedUsername = fn.toLowerCase().replace(/\s/g, '') + '.' + (ln[0] || '').toLowerCase();
         setValue('Username', generatedUsername);
@@ -77,11 +90,13 @@ export default function UsersPage() {
 
   const closeModal = () => { setIsModalOpen(false); setEditingUser(null); reset(); };
 
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserForm>();
+
   const onSubmit = async (data: UserForm) => {
     setIsSubmitting(true);
     setErrorMsg('');
 
-    const isDuplicate = users.some((u: any) =>
+    const isDuplicate = displayUsers.some((u: any) =>
       String(u.Username).toLowerCase() === String(data.Username).toLowerCase() &&
       (!editingUser || u.Username !== editingUser.Username)
     );
@@ -97,19 +112,18 @@ export default function UsersPage() {
       Role: data.Role,
       name: data.name,
       Surname: data.Surname,
-      // Keep legacy fields in sync for now during transition 
       FirstName: data.name,
       LastName: data.Surname
     };
     if (data.Password) {
       payload.Password = data.Password;
-      payload.MustChangePassword = 'FALSE';
     }
 
-    const success = editingUser ? await updateRecord("Users", payload) : await createRecord("Users", payload);
+    // Target the appropriate sheet
+    const success = editingUser ? await updateRecord(currentSheet, payload) : await createRecord(currentSheet, payload);
 
     if (success) {
-      toast.success(editingUser ? 'แก้ไขข้อมูลผู้ใช้งานสำเร็จ' : 'เพิ่มผู้ใช้งานใหม่สำเร็จ');
+      toast.success(editingUser ? 'แก้ไขข้อมูลสำเร็จ' : 'เพิ่มข้อมูลสำเร็จ');
       closeModal();
     } else {
       setErrorMsg('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
@@ -118,15 +132,24 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (username: string) => {
+    if (activeTab === 'standard' && username === 'admin') {
+      alert('ไม่สามารถลบบัญชี Admin หลักได้');
+      return;
+    }
+    if (activeTab === 'super' && username === currentUser.Username) {
+       alert('ไม่สามารถลบบัญชีที่คุณกำลังใช้งานอยู่ได้');
+       return;
+    }
+
     if (!confirm(`คุณต้องการลบผู้ใช้งาน "${username}" ใช่หรือไม่?`)) return;
-    const success = await deleteRecord("Users", { Username: username });
+    const success = await deleteRecord(currentSheet, { Username: username });
     if (success) toast.success('ลบผู้ใช้งานสำเร็จ');
     else toast.error('ไม่สามารถลบผู้ใช้งานได้');
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <UsersIcon className="w-6 h-6 text-blue-600" />
@@ -135,9 +158,32 @@ export default function UsersPage() {
           <p className="text-slate-500">จัดการข้อมูลและกำหนดสิทธิ์การใช้งานของผู้ใช้งานในระบบ</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary">
-          <Plus className="w-4 h-4 ml-1" /> เพิ่มผู้ใช้งาน
+          <Plus className="w-4 h-4 mr-1" /> {activeTab === 'super' ? 'เพิ่ม Super Admin' : 'เพิ่มผู้ใช้งาน'}
         </button>
       </div>
+
+      {isSuper && (
+        <div className="flex p-1 bg-slate-100 rounded-xl w-fit">
+          <button 
+            onClick={() => setActiveTab('standard')}
+            className={clsx(
+              "px-6 py-2 rounded-lg text-sm font-black transition-all",
+              activeTab === 'standard' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            ผู้ใช้งานทั่วไป
+          </button>
+          <button 
+            onClick={() => setActiveTab('super')}
+            className={clsx(
+              "px-6 py-2 rounded-lg text-sm font-black transition-all flex items-center gap-2",
+              activeTab === 'super' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Shield className="w-4 h-4" /> ทีม Super Admin
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left">
@@ -159,14 +205,20 @@ export default function UsersPage() {
                    <td className="px-6 py-4"><div className="h-8 w-16 bg-slate-100 ml-auto rounded" /></td>
                  </tr>
                ))
-            ) : users.map((user) => (
+            ) : displayUsers.length === 0 ? (
+               <tr>
+                 <td colSpan={4} className="px-6 py-20 text-center text-slate-400 italic">ไม่พบข้อมูลในกลุ่มนี้</td>
+               </tr>
+            ) : displayUsers.map((user) => (
               <tr key={user.Username} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-700">{user.Username}</td>
                 <td className="px-6 py-4 text-slate-600">{user.name || user.FirstName} {user.Surname || user.LastName}</td>
                 <td className="px-6 py-4 text-center">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                  <span className={clsx(
+                    "px-2.5 py-1 rounded-full text-[10px] font-black uppercase",
+                    user.Role === 'super Admin' ? 'bg-indigo-600 text-white' : 
                     user.Role === 'Admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
-                  }`}>
+                  )}>
                     {user.Role}
                   </span>
                 </td>
@@ -176,7 +228,7 @@ export default function UsersPage() {
                   </button>
                   <button 
                     onClick={() => handleDelete(user.Username)} 
-                    disabled={user.Username === 'admin'}
+                    disabled={(activeTab === 'standard' && user.Username === 'admin') || (activeTab === 'super' && user.Username === currentUser.Username)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -194,7 +246,7 @@ export default function UsersPage() {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 {editingUser ? <Edit2 className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-blue-600" />}
-                {editingUser ? 'แก้ไขผู้ใช้งาน' : 'เพิ่มผู้ใช้งานใหม่'}
+                {editingUser ? 'แก้ไขผู้ใช้งาน' : activeTab === 'super' ? 'เพิ่ม Super Admin' : 'เพิ่มผู้ใช้งานใหม่'}
               </h3>
               <button onClick={closeModal} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/50 transition-all">
                 <X className="w-5 h-5" />
@@ -263,12 +315,39 @@ export default function UsersPage() {
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">สิทธิ์การใช้งาน (Role)</label>
-                <select {...register('Role', { required: true })} className={inputCls(false)}>
-                  <option value="user">User (ดูข้อมูล)</option>
-                  <option value="admin_approve">Admin Approve (เบิก-จ่าย)</option>
-                  <option value="Admin">Admin (จัดการระบบ)</option>
+                <select {...register('Role', { required: true })} className={inputCls(false)} disabled={activeTab === 'super'}>
+                  {activeTab === 'super' ? (
+                    <option value="super Admin">super Admin (สูงสุด)</option>
+                  ) : (
+                    <>
+                      <option value="user">User (ดูข้อมูล)</option>
+                      <option value="admin_approve">Admin Approve (เบิก-จ่าย)</option>
+                      <option value="Admin">Admin (จัดการระบบ)</option>
+                      {/* Dynamically show other roles from permissions if any */}
+                      {rolePermissions
+                        .filter((rp: any) => !['Admin', 'super Admin', 'user', 'admin_approve'].includes(rp.RoleName))
+                        .map((rp: any) => (
+                          <option key={rp.RoleName} value={rp.RoleName}>{rp.RoleName}</option>
+                        ))}
+                    </>
+                  )}
                 </select>
               </div>
+
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={closeModal} className="flex-1 px-4 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all">ยกเลิก</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center justify-center gap-2 shadow-lg">
+                  {isSubmitting ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <LogIn className="w-4 h-4" />}
+                  {editingUser ? 'บันทึกการแก้ไข' : 'เพิ่มผู้ใช้งาน'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
               <div className="pt-2 flex gap-3">
                 <button type="button" onClick={closeModal} className="flex-1 px-4 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all">ยกเลิก</button>

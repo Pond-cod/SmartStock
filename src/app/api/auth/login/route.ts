@@ -74,7 +74,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = await bcrypt.compare(String(password), String(user.Password));
+    let isValid = false;
+    const dbPassword = String(user.Password);
+    
+    // Check if it's a bcrypt hash (usually starts with $2a$ or $2b$)
+    if (dbPassword.startsWith('$2')) {
+      isValid = await bcrypt.compare(String(password), dbPassword);
+    } else {
+      // Fallback for manually entered plain-text passwords in Google Sheets
+      isValid = String(password) === dbPassword;
+    }
+
     if (!isValid) {
       return NextResponse.json(
         { success: false, error: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง' },
