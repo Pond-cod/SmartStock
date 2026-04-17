@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   // ── Public paths — no auth required ──────────────────────────────────────
   const isPublicPath =
     pathname.startsWith('/login') ||
-    pathname.startsWith('/api/auth/login') ||
+    pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/health');
 
   if (isPublicPath) {

@@ -59,9 +59,9 @@ export default function LoginPage() {
     setErrorText('');
     setIsSubmitting(true);
     try {
-      const success = await login(username, password);
-      if (!success) {
-        setErrorText('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
+      const result = await login(username, password);
+      if (!result.success) {
+        setErrorText(result.error || 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
       }
     } catch (err: any) {
       setErrorText(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');

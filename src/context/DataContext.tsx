@@ -45,6 +45,22 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const reactQueryClient = useQueryClient();
   const [connStatus, setConnStatus] = useState<ConnStatus>('idle');
   const [lastConnectedAt, setLastConnectedAt] = useState<Date | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check auth status on mount and listen for login events
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) setIsAuthenticated(true);
+      } catch { /* not authenticated */ }
+    };
+    checkAuth();
+
+    const onLogin = () => setIsAuthenticated(true);
+    window.addEventListener('auth:login', onLogin);
+    return () => window.removeEventListener('auth:login', onLogin);
+  }, []);
 
   const { data: allData, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['spreadsheet-data'],
@@ -66,6 +82,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
       }
       return data;
     },
+    enabled: isAuthenticated, // Only fetch when user is logged in
     staleTime: 60000,
     refetchInterval: 120000,
     retry: 2,
