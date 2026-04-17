@@ -11,8 +11,8 @@ type UserForm = {
   Username: string;
   Password?: string;
   Role: string;
-  FirstName: string;
-  LastName: string;
+  name: string;
+  Surname: string;
 };
 
 const inputCls = (hasError: boolean) =>
@@ -44,8 +44,16 @@ export default function UsersPage() {
 
   const openModal = (user: any = null) => {
     setEditingUser(user);
-    if (user) reset({ Username: user.Username, Password: '', Role: user.Role, FirstName: user.FirstName || '', LastName: user.LastName || '' });
-    else reset({ Username: '', Password: '', Role: 'user', FirstName: '', LastName: '' });
+    if (user) {
+      reset({ 
+        Username: user.Username, 
+        Password: '', 
+        Role: user.Role, 
+        name: user.name || user.FirstName || '', 
+        Surname: user.Surname || user.LastName || '' 
+      });
+    }
+    else reset({ Username: '', Password: '', Role: 'user', name: '', Surname: '' });
     setErrorMsg('');
     setShowPassword(false);
     setIsModalOpen(true);
@@ -57,8 +65,8 @@ export default function UsersPage() {
       const fn = person.name || '';
       const ln = person.Surname || '';
       
-      setValue('FirstName', fn);
-      setValue('LastName', ln);
+      setValue('name', fn);
+      setValue('Surname', ln);
       // Auto-generate username from firstname if creating new user
       if (!editingUser) {
         const generatedUsername = fn.toLowerCase().replace(/\s/g, '') + '.' + (ln[0] || '').toLowerCase();
@@ -87,8 +95,11 @@ export default function UsersPage() {
     const payload: any = {
       Username: data.Username,
       Role: data.Role,
-      FirstName: data.FirstName,
-      LastName: data.LastName
+      name: data.name,
+      Surname: data.Surname,
+      // Keep legacy fields in sync for now during transition 
+      FirstName: data.name,
+      LastName: data.Surname
     };
     if (data.Password) {
       payload.Password = data.Password;
@@ -151,7 +162,7 @@ export default function UsersPage() {
             ) : users.map((user) => (
               <tr key={user.Username} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-700">{user.Username}</td>
-                <td className="px-6 py-4 text-slate-600">{user.FirstName} {user.LastName}</td>
+                <td className="px-6 py-4 text-slate-600">{user.name || user.FirstName} {user.Surname || user.LastName}</td>
                 <td className="px-6 py-4 text-center">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
                     user.Role === 'Admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
@@ -215,11 +226,11 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ชื่อ</label>
-                  <input {...register('FirstName', { required: true })} className={inputCls(!!errors.FirstName)} placeholder="สมชาย" />
+                  <input {...register('name', { required: true })} className={inputCls(!!errors.name)} placeholder="สมชาย" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">นามสกุล</label>
-                  <input {...register('LastName', { required: true })} className={inputCls(!!errors.LastName)} placeholder="ใจดี" />
+                  <input {...register('Surname', { required: true })} className={inputCls(!!errors.Surname)} placeholder="ใจดี" />
                 </div>
               </div>
 

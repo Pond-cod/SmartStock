@@ -26,13 +26,18 @@ const ACTIONS = [
 ];
 
 export default function RolesPermissionsPage() {
-  const { rolePermissions, createRecord, updateRecord, deleteRecord, isLoading } = useData();
+  const { rolePermissions, users, createRecord, updateRecord, deleteRecord, isLoading } = useData();
   const { currentUser } = useAuth();
   const toast = useToast();
   const [editingRole, setEditingRole] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!currentUser || currentUser.Role !== 'Admin') return null;
+
+  // Identify roles in User list that are not in RolePermissions
+  const systemRoles = Array.from(new Set(users.map((u: any) => u.Role))).filter(Boolean);
+  const existingPermRoles = rolePermissions.map((r: any) => r.RoleName);
+  const suggestedRoles = systemRoles.filter(r => !existingPermRoles.includes(r));
 
   const handleToggle = (roleName: string, moduleId: string, actionId: string) => {
     const role = rolePermissions.find((r: any) => r.RoleName === roleName);
@@ -50,8 +55,7 @@ export default function RolesPermissionsPage() {
     updateRecord('RolePermissions', updatedRole);
   };
 
-  const handleAddRole = async () => {
-    const name = prompt('กรุณาระบุชื่อ Role ใหม่:');
+  const handleCreateRole = async (name: string) => {
     if (!name) return;
     if (rolePermissions.some((r: any) => r.RoleName === name)) {
       alert('มีชื่อ Role นี้อยู่แล้ว');
@@ -61,7 +65,12 @@ export default function RolesPermissionsPage() {
     const newRole: any = { RoleName: name };
     MODULES.forEach(m => newRole[m.id] = 'view'); // Default permission
     const success = await createRecord('RolePermissions', newRole);
-    if (success) toast.success('สร้าง Role ใหม่สำเร็จ');
+    if (success) toast.success(`สร้างสิทธิ์สำหรับ Role "${name}" สำเร็จ`);
+  };
+
+  const handleAddRolePrompt = async () => {
+    const name = prompt('กรุณาระบุชื่อ Role ใหม่:');
+    if (name) handleCreateRole(name);
   };
 
   const handleDeleteRole = async (roleName: string) => {
@@ -77,7 +86,7 @@ export default function RolesPermissionsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-200">
@@ -87,10 +96,32 @@ export default function RolesPermissionsPage() {
           </h1>
           <p className="text-slate-500 font-medium mt-1">ตั้งค่าสิทธิ์แยกตาม Module สำหรับแต่ละกลุ่มผู้ใช้งาน</p>
         </div>
-        <button onClick={handleAddRole} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 active:scale-95">
-          <Plus className="w-5 h-5" /> เพิ่ม Role ใหม่
-        </button>
+        <div className="flex flex-wrap gap-2">
+           <button onClick={handleAddRolePrompt} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl font-black transition-all flex items-center gap-2">
+             <Plus className="w-5 h-5" /> สร้าง Role กำหนดเอง
+           </button>
+        </div>
       </div>
+
+      {suggestedRoles.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2.5rem] animate-in zoom-in-95">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="w-5 h-5 text-indigo-600" />
+            <h3 className="font-black text-indigo-900">พบ Role ในระบบที่ยังไม่ได้กำหนดสิทธิ์:</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {suggestedRoles.map(role => (
+              <button 
+                key={role} 
+                onClick={() => handleCreateRole(role)}
+                className="bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 px-4 py-2 rounded-xl text-sm font-black border border-indigo-200 shadow-sm transition-all flex items-center gap-2"
+              >
+                <Plus className="w-3 h-3" /> เพิ่มสิทธิ์สำหรับ "{role}"
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6">
         {isLoading ? (
