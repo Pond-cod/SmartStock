@@ -116,7 +116,7 @@ export default function RolesPermissionsPage() {
                 onClick={() => handleCreateRole(role)}
                 className="bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 px-4 py-2 rounded-xl text-sm font-black border border-indigo-200 shadow-sm transition-all flex items-center gap-2"
               >
-                <Plus className="w-3 h-3" /> เพิ่มสิทธิ์สำหรับ "{role}"
+                <Plus className="w-3 h-3" /> เพิ่มสิทธิ์สำหรับ &quot;{role}&quot;
               </button>
             ))}
           </div>

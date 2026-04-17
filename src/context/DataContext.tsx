@@ -104,16 +104,18 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     }
   });
 
-  const categories = Array.isArray(allData?.Categories) ? allData.Categories : [];
-  const equipments = Array.isArray(allData?.Equipments) ? allData.Equipments : [];
-  const users = Array.isArray(allData?.Users) ? allData.Users : [];
-  const personnel = Array.isArray(allData?.Personnel) ? allData.Personnel : [];
-  const departments = Array.isArray(allData?.Departments) ? allData.Departments : [];
-  const transactions = Array.isArray(allData?.Transactions) ? allData.Transactions : [];
-  const rolePermissions = Array.isArray(allData?.RolePermissions) ? allData.RolePermissions : [];
-  const settings = Array.isArray(allData?.Settings) && allData.Settings.length > 0 
-    ? { ...DEFAULT_SETTINGS, ...allData.Settings[0] } 
-    : DEFAULT_SETTINGS;
+  const categories = React.useMemo(() => Array.isArray(allData?.Categories) ? allData.Categories : [], [allData]);
+  const equipments = React.useMemo(() => Array.isArray(allData?.Equipments) ? allData.Equipments : [], [allData]);
+  const users = React.useMemo(() => Array.isArray(allData?.Users) ? allData.Users : [], [allData]);
+  const personnel = React.useMemo(() => Array.isArray(allData?.Personnel) ? allData.Personnel : [], [allData]);
+  const departments = React.useMemo(() => Array.isArray(allData?.Departments) ? allData.Departments : [], [allData]);
+  const transactions = React.useMemo(() => Array.isArray(allData?.Transactions) ? allData.Transactions : [], [allData]);
+  const rolePermissions = React.useMemo(() => Array.isArray(allData?.RolePermissions) ? allData.RolePermissions : [], [allData]);
+  const settings = React.useMemo(() => {
+    return Array.isArray(allData?.Settings) && allData.Settings.length > 0 
+      ? { ...DEFAULT_SETTINGS, ...allData.Settings[0] } 
+      : DEFAULT_SETTINGS;
+  }, [allData]);
 
   const hasPermission = useCallback((role: string, module: string, action: 'view' | 'create' | 'edit' | 'delete' | 'approve' = 'view') => {
     if (role === 'Admin') return true; // Super admin always has full access

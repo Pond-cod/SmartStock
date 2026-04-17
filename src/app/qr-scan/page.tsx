@@ -31,14 +31,7 @@ export default function QRScanPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const html5QrCodeRef = useRef<any>(null);
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    if (code && equipments.length > 0) {
-      lookupCode(code);
-    }
-  }, [searchParams, equipments]);
-
-  const lookupCode = (rawCode: string) => {
+  const lookupCode = React.useCallback((rawCode: string) => {
     let code = rawCode.trim();
     const eq = equipments.find(e => String(e.EquipmentCode).toLowerCase() === code.toLowerCase());
     if (eq) {
@@ -47,9 +40,16 @@ export default function QRScanPage() {
     } else {
       setScanState('not_found');
     }
-  };
+  }, [equipments]);
 
-  const startCamera = async () => {
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code && equipments.length > 0) {
+      lookupCode(code);
+    }
+  }, [searchParams, equipments, lookupCode]);
+
+  const startCamera = React.useCallback(async () => {
     setIsStarting(true);
     setCameraError('');
     try {
@@ -75,16 +75,16 @@ export default function QRScanPage() {
     } finally {
       setIsStarting(false);
     }
-  };
+  }, [lookupCode]);
 
-  const stopCamera = () => {
+  const stopCamera = React.useCallback(() => {
     if (html5QrCodeRef.current) {
       html5QrCodeRef.current.stop().catch(() => {});
       html5QrCodeRef.current = null;
     }
     setIsCameraActive(false);
     if (scanState === 'scanning') setScanState('idle');
-  };
+  }, [scanState]);
 
   const reset = () => {
     stopCamera();
@@ -96,7 +96,7 @@ export default function QRScanPage() {
 
   useEffect(() => {
     return () => { stopCamera(); };
-  }, []);
+  }, [stopCamera]);
 
   const eq = foundEquipment;
   const statusCfg = eq ? (STATUS_CFG[eq.Status] ?? { label: eq.Status, cls: 'bg-slate-100', icon: null }) : null;
