@@ -11,6 +11,7 @@ type DataContextType = {
   categories: any[];
   equipments: any[];
   users: any[];
+  superAdmins: any[];
   personnel: any[];
   departments: any[];
   transactions: any[];
