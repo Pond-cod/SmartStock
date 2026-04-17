@@ -174,7 +174,7 @@ export default function RolesPermissionsPage() {
         <div className="text-sm text-amber-800 space-y-1">
           <p className="font-black">💡 คำแนะนำ:</p>
           <p>1. สิทธิ์ **Admin** จะมีผลเหนือการตั้งค่าทั้งหมด (Full Access เสมอ)</p>
-          <p>2. การระบุชื่อ Role ต้องตรงกับ Role ที่กำหนดในหน้า "จัดการผู้ใช้งาน" (Case-sensitive)</p>
+          <p>2. การระบุชื่อ Role ต้องตรงกับ Role ที่กำหนดในหน้า &quot;จัดการผู้ใช้งาน&quot; (Case-sensitive)</p>
           <p>3. ระบบจะบันทึกการเปลี่ยนแปลงทันทีเมื่อกดปุ่มสิทธิ์</p>
         </div>
       </div>
