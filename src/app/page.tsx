@@ -83,7 +83,7 @@ export default function DashboardPage() {
     new Date(b.CreatedAt || 0).getTime() - new Date(a.CreatedAt || 0).getTime()
   ).slice(0, 6), [equipments]);
 
-  const canEdit = currentUser?.Role === 'Admin';
+  const canEdit = currentUser?.Role === 'Admin' || currentUser?.Role === 'super Admin';
 
   if (error) return (
     <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 bg-red-50 rounded-2xl border border-red-100">

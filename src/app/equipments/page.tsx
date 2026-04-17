@@ -114,7 +114,7 @@ export default function EquipmentsPage() {
   const [showIssueModal, setShowIssueModal] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EquipmentForm>();
-  const canEdit = currentUser && ['Admin', 'admin_approve'].includes(currentUser.Role);
+  const canEdit = currentUser && ['Admin', 'admin_approve', 'super Admin'].includes(currentUser.Role);
 
   const searchParams = useSearchParams();
   const router = useRouter();

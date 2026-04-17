@@ -29,7 +29,8 @@ export default function SettingsPage() {
   const [message, setMessage] = useState({ text: '', type: '' });
 
   useEffect(() => {
-    if (currentUser && currentUser.Role !== 'Admin') router.push('/');
+    const canEdit = currentUser?.Role === 'Admin' || currentUser?.Role === 'super Admin';
+    if (currentUser && !canEdit) router.push('/');
   }, [currentUser, router]);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function SettingsPage() {
     }
   }, [settings]);
 
-  if (!currentUser || currentUser.Role !== 'Admin') return null;
+  if (!currentUser || (currentUser.Role !== 'Admin' && currentUser.Role !== 'super Admin')) return null;
 
   const handleSave = async () => {
     setIsSaving(true);

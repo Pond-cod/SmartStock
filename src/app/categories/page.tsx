@@ -34,10 +34,10 @@ export default function CategoriesPage() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CategoryForm>();
 
   useEffect(() => {
-    if (currentUser && !['Admin', 'admin_approve'].includes(currentUser.Role)) router.push('/');
+    if (currentUser && !['Admin', 'admin_approve', 'super Admin'].includes(currentUser.Role)) router.push('/');
   }, [currentUser, router]);
 
-  if (!currentUser || !['Admin', 'admin_approve'].includes(currentUser.Role)) return null;
+  if (!currentUser || !['Admin', 'admin_approve', 'super Admin'].includes(currentUser.Role)) return null;
 
   const openModal = (cat: any = null) => {
     setEditingCat(cat);

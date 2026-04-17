@@ -18,7 +18,7 @@ export default function MasterDataPage() {
   const pForm = useForm();
   const dForm = useForm();
 
-  if (!currentUser || currentUser.Role !== 'Admin') return null;
+  if (!currentUser || (currentUser.Role !== 'Admin' && currentUser.Role !== 'super Admin')) return null;
 
   const openModal = (item: any = null) => {
     setEditingItem(item);
