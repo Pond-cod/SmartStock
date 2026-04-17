@@ -208,20 +208,18 @@ export default function UsersPage() {
                 </div>
               )}
 
-              {!editingUser && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">ดึงข้อมูลจากรายชื่อพนักงาน</label>
-                  <select 
-                    className={inputCls(false)}
-                    onChange={(e) => handleSelectPersonnel(e.target.value)}
-                  >
-                    <option value="">-- เลือกพนักงาน (เพื่อระบุข้อมูลอัตโนมัติ) --</option>
-                    {personnel.map(p => (
-                      <option key={p.PersonnelID} value={p.PersonnelID}>{p.name} {p.Surname}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">ดึงข้อมูลจากรายชื่อพนักงาน</label>
+                <select 
+                  className={inputCls(false)}
+                  onChange={(e) => handleSelectPersonnel(e.target.value)}
+                >
+                  <option value="">-- เลือกพนักงาน (เพื่อระบุข้อมูลอัตโนมัติ) --</option>
+                  {personnel.map(p => (
+                    <option key={p.PersonnelID} value={p.PersonnelID}>{p.name} {p.Surname}</option>
+                  ))}
+                </select>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
