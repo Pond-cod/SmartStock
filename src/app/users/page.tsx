@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { Plus, Edit2, Trash2, X, AlertCircle, Users as UsersIcon, Eye, EyeOff, Key , LogIn} from 'lucide-react';
+import { Plus, Edit2, Trash2, X, AlertCircle, Users as UsersIcon, Eye, EyeOff, Key , LogIn, Shield} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
+import clsx from 'clsx';
 
 type UserForm = {
   Username: string;
@@ -34,6 +35,7 @@ export default function UsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserForm>();
 
   // Authorized if Admin or super Admin
   const isAuthorized = currentUser && (currentUser.Role === 'Admin' || currentUser.Role === 'super Admin');
@@ -90,7 +92,6 @@ export default function UsersPage() {
 
   const closeModal = () => { setIsModalOpen(false); setEditingUser(null); reset(); };
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserForm>();
 
   const onSubmit = async (data: UserForm) => {
     setIsSubmitting(true);
