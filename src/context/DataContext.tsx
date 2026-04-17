@@ -108,9 +108,20 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const personnel = Array.isArray(allData?.Personnel) ? allData.Personnel : [];
   const departments = Array.isArray(allData?.Departments) ? allData.Departments : [];
   const transactions = Array.isArray(allData?.Transactions) ? allData.Transactions : [];
+  const rolePermissions = Array.isArray(allData?.RolePermissions) ? allData.RolePermissions : [];
   const settings = Array.isArray(allData?.Settings) && allData.Settings.length > 0 
     ? { ...DEFAULT_SETTINGS, ...allData.Settings[0] } 
     : DEFAULT_SETTINGS;
+
+  const hasPermission = useCallback((role: string, module: string, action: 'view' | 'create' | 'edit' | 'delete' | 'approve' = 'view') => {
+    if (role === 'Admin') return true; // Super admin always has full access
+    const permission = rolePermissions.find((p: any) => p.RoleName === role);
+    if (!permission) return false;
+    
+    // Check if permission is stored as comma-separated actions like "view,create"
+    const allowedActions = (permission[module] || '').toLowerCase().split(',').map((a: string) => a.trim());
+    return allowedActions.includes(action);
+  }, [rolePermissions]);
 
   const mutation = useMutation({
     mutationFn: async ({ action, sheet, data }: { action: string, sheet: string, data: any }) => {
@@ -182,12 +193,13 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      categories, equipments, users, personnel, departments, transactions, settings,
+      categories, equipments, users, personnel, departments, transactions, rolePermissions, settings,
       isLoading: isLoading && !allData, // Show loading only if we have no offline placeholder
       error: queryError ? queryError.message : null,
       connStatus: queryError ? 'error' : connStatus,
       lastConnectedAt,
       refreshData,
+      hasPermission,
       createRecord: async (sheet: string, data: any) => (await mutate('ADD',    sheet, data)).success,
       updateRecord: async (sheet: string, data: any) => (await mutate('EDIT',   sheet, data)).success,
       deleteRecord: async (sheet: string, idData: any) => (await mutate('DELETE', sheet, idData)).success,

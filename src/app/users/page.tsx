@@ -23,7 +23,7 @@ const inputCls = (hasError: boolean) =>
   }`;
 
 export default function UsersPage() {
-  const { users, isLoading, createRecord, updateRecord, deleteRecord } = useData();
+  const { users, personnel, isLoading, createRecord, updateRecord, deleteRecord } = useData();
   const { currentUser } = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -34,7 +34,7 @@ export default function UsersPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserForm>();
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserForm>();
 
   useEffect(() => {
     if (currentUser && currentUser.Role !== 'Admin') router.push('/');
@@ -49,6 +49,22 @@ export default function UsersPage() {
     setErrorMsg('');
     setShowPassword(false);
     setIsModalOpen(true);
+  };
+
+  const handleSelectPersonnel = (pId: string) => {
+    const person = personnel.find(p => p.PersonnelID === pId);
+    if (person) {
+      const fn = person.name || '';
+      const ln = person.Surname || '';
+      
+      setValue('FirstName', fn);
+      setValue('LastName', ln);
+      // Auto-generate username from firstname if creating new user
+      if (!editingUser) {
+        const generatedUsername = fn.toLowerCase().replace(/\s/g, '') + '.' + (ln[0] || '').toLowerCase();
+        setValue('Username', generatedUsername);
+      }
+    }
   };
 
   const closeModal = () => { setIsModalOpen(false); setEditingUser(null); reset(); };
@@ -108,7 +124,7 @@ export default function UsersPage() {
           <p className="text-slate-500">จัดการข้อมูลและกำหนดสิทธิ์การใช้งานของผู้ใช้งานในระบบ</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary">
-          <Plus className="w-4 h-4" /> เพิ่มผู้ใช้งาน
+          <Plus className="w-4 h-4 ml-1" /> เพิ่มผู้ใช้งาน
         </button>
       </div>
 
@@ -178,6 +194,21 @@ export default function UsersPage() {
               {errorMsg && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
+                </div>
+              )}
+
+              {!editingUser && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">ดึงข้อมูลจากรายชื่อพนักงาน</label>
+                  <select 
+                    className={inputCls(false)}
+                    onChange={(e) => handleSelectPersonnel(e.target.value)}
+                  >
+                    <option value="">-- เลือกพนักงาน (เพื่อระบุข้อมูลอัตโนมัติ) --</option>
+                    {personnel.map(p => (
+                      <option key={p.PersonnelID} value={p.PersonnelID}>{p.name} {p.Surname}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 

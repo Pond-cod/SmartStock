@@ -8,20 +8,21 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
-  { name: 'แดชบอร์ด', href: '/', icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'หมวดหมู่', href: '/categories', icon: Layers, roles: ['Admin', 'admin_approve'] },
-  { name: 'รายการพัสดุ', href: '/equipments', icon: Package, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ทำรายการเบิก', href: '/requisition', icon: Send, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ประวัติเบิก-คืน', href: '/transactions', icon: History, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'รายงานสรุป', href: '/reports', icon: BarChart3, roles: ['Admin', 'admin_approve'] },
-  { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, roles: ['Admin', 'admin_approve', 'user'] },
-  { name: 'ข้อมูลหลัก', href: '/master-data', icon: Users, roles: ['Admin'] },
-  { name: 'ผู้ใช้งานระบบ', href: '/users', icon: Factory, roles: ['Admin'] },
+  { name: 'แดชบอร์ด', href: '/', icon: LayoutDashboard, module: 'Dashboard' },
+  { name: 'หมวดหมู่', href: '/categories', icon: Layers, module: 'Categories' },
+  { name: 'รายการพัสดุ', href: '/equipments', icon: Package, module: 'Equipments' },
+  { name: 'ทำรายการเบิก', href: '/requisition', icon: Send, module: 'Requisition' },
+  { name: 'ประวัติเบิก-คืน', href: '/transactions', icon: History, module: 'Transactions' },
+  { name: 'รายงานสรุป', href: '/reports', icon: BarChart3, module: 'Reports' },
+  { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, module: 'Equipments' }, // Reuse Equipment perm for scan
+  { name: 'ข้อมูลหลัก', href: '/master-data', icon: Users, module: 'MasterData' },
+  { name: 'ผู้ใช้งานระบบ', href: '/users', icon: Factory, module: 'Users' },
 ];
 
 export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen: boolean, setMobileOpen: (v: boolean) => void }) {
   const pathname = usePathname();
   const { currentUser } = useAuth();
+  const { hasPermission } = useData();
   const userRole = currentUser?.Role || 'user';
 
   const SidebarContent = () => (
@@ -49,7 +50,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
       </div>
 
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-        {navItems.filter(item => item.roles.includes(userRole)).map((item) => (
+        {navItems.filter(item => hasPermission(userRole, item.module, 'view')).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -76,18 +77,31 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
           </div>
         </div>
 
-        {['Admin'].includes(userRole) && (
-          <Link
-            href="/settings"
-            onClick={() => setMobileOpen(false)}
-            className={clsx(
-              'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
-              pathname === '/settings' ? 'bg-[var(--primary)] text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
-            )}
-          >
-            <Settings className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
-            <span className="text-sm font-semibold md:hidden lg:block truncate">ตั้งค่าระบบ</span>
-          </Link>
+        {userRole === 'Admin' && (
+          <>
+            <Link
+              href="/settings/roles"
+              onClick={() => setMobileOpen(false)}
+              className={clsx(
+                'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+                pathname === '/settings/roles' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <Shield className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
+              <span className="text-sm font-semibold md:hidden lg:block truncate">จัดการสิทธิ์</span>
+            </Link>
+            <Link
+              href="/settings"
+              onClick={() => setMobileOpen(false)}
+              className={clsx(
+                'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+                pathname === '/settings' ? 'bg-[var(--primary)] text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <Settings className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
+              <span className="text-sm font-semibold md:hidden lg:block truncate">ตั้งค่าระบบ</span>
+            </Link>
+          </>
         )}
 
         <div className="pt-4 px-3 md:hidden lg:block">

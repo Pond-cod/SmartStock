@@ -17,9 +17,17 @@ function doGet(e) {
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
+  // Mapping internal names to actual sheet names in the spreadsheet
+  const nameMap = {
+    'Personnel': 'Personnel', // User renamed back to English
+    'Departments': 'Departments',
+    'RolePermissions': 'RolePermissions'
+  };
+
   if (sheetName === 'ALL') {
     const getSheetData = (sName) => {
-      const sheet = ss.getSheetByName(sName);
+      const actualName = nameMap[sName] || sName;
+      const sheet = ss.getSheetByName(actualName);
       if (!sheet) return [];
       const data = sheet.getDataRange().getValues();
       if (data.length <= 1) return [];
@@ -38,7 +46,8 @@ function doGet(e) {
       Settings: getSheetData('Settings'),
       Personnel: getSheetData('Personnel'),
       Departments: getSheetData('Departments'),
-      Transactions: getSheetData('Transactions')
+      Transactions: getSheetData('Transactions'),
+      RolePermissions: getSheetData('RolePermissions')
     };
     
     const resultJson = JSON.stringify(result);
@@ -117,11 +126,20 @@ function doPost(e) {
     }
   
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Sheet not found"})).setMimeType(ContentService.MimeType.JSON);
+  
+  // Mapping internal names to actual sheet names in the spreadsheet
+  const nameMap = {
+    'Personnel': 'พนักงาน',
+    'Departments': 'Departments',
+    'RolePermissions': 'RolePermissions'
+  };
+  
+  const actualSheetName = nameMap[sheetName] || sheetName;
+  const sheet = ss.getSheetByName(actualSheetName);
+  if (!sheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Sheet not found: " + actualSheetName})).setMimeType(ContentService.MimeType.JSON);
 
   const writeAuditLog = () => {
-    if (sheetName === 'Transactions') return; // Don't log logs
+    if (actualSheetName === 'Transactions') return; // Don't log logs
     try {
       const txSheet = ss.getSheetByName('Transactions');
       if (!txSheet) return;
@@ -130,7 +148,7 @@ function doPost(e) {
         TransactionID: `TXN-${Date.now()}`,
         Date: new Date().toISOString(),
         User: caller,
-        Action: `${action} on ${sheetName}`,
+        Action: `${action} on ${actualSheetName}`,
         Details: JSON.stringify(data).substring(0, 200)
       };
       const logRow = txHeaders.map(h => logData[h] || "");
@@ -171,6 +189,7 @@ function doPost(e) {
     if (sName === 'Personnel') return 'PersonnelID';
     if (sName === 'Departments') return 'DepartmentID';
     if (sName === 'Transactions') return 'TransactionID';
+    if (sName === 'RolePermissions') return 'RoleName';
     return null;
   };
 

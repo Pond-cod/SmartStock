@@ -4,25 +4,26 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, QrCode, History, Send } from 'lucide-react';
 import clsx from 'clsx';
-import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { currentUser } = useAuth();
+  const { hasPermission } = useData();
   const userRole = currentUser?.Role || 'user';
 
   const items = [
-    { name: 'หน้าหลัก', href: '/',            icon: LayoutDashboard, roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'พัสดุ',    href: '/equipments',   icon: Package,         roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'เบิกพัสดุ', href: '/requisition',  icon: Send,            roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'สแกน',    href: '/qr-scan',       icon: QrCode,          roles: ['Admin', 'admin_approve', 'user'] },
-    { name: 'ประวัติ',  href: '/transactions',  icon: History,         roles: ['Admin', 'admin_approve', 'user'] },
+    { name: 'หน้าหลัก',  href: '/',            icon: LayoutDashboard, module: 'Dashboard' },
+    { name: 'พัสดุ',     href: '/equipments',   icon: Package,         module: 'Equipments' },
+    { name: 'เบิกพัสดุ',  href: '/requisition',  icon: Send,            module: 'Requisition' },
+    { name: 'สแกน',     href: '/qr-scan',       icon: QrCode,          module: 'Equipments' },
+    { name: 'ประวัติ',   href: '/transactions',  icon: History,         module: 'Transactions' },
   ];
 
   return (
     <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-[#0d2137]/95 backdrop-blur-lg border-t border-white/5 px-2 pb-safe z-30 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]'>
       <div className='flex items-center justify-around h-16'>
-        {items.filter(i => i.roles.includes(userRole)).map((item) => (
+        {items.filter(i => hasPermission(userRole, i.module, 'view')).map((item) => (
           <Link
             key={item.href}
             href={item.href}
