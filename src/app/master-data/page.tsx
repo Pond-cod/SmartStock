@@ -47,17 +47,23 @@ export default function MasterDataPage() {
     setIsSubmitting(true);
     // Sync 'Name' (legacy) if needed, but the sheet uses 'name'
     const payload = { ...data, Name: `${data.name} ${data.Surname}`.trim() };
-    const success = editingItem ? await updateRecord('Personnel', payload) : await createRecord('Personnel', payload);
-    if (success) { toast.success('บันทึกข้อมูลบุคลากรสำเร็จ'); closeModal(); }
-    else { toast.error('ไม่สามารถบันทึกข้อมูลได้'); }
+    const res = editingItem ? await updateRecord('Personnel', payload) : await createRecord('Personnel', payload);
+    if (res.success) { 
+      toast.success(res.message || 'บันทึกข้อมูลบุคลากรสำเร็จ'); 
+      closeModal(); 
+    }
+    else { toast.error(res.error || 'ไม่สามารถบันทึกข้อมูลได้'); }
     setIsSubmitting(false);
   };
 
   const onDeptSubmit = async (data: any) => {
     setIsSubmitting(true);
-    const success = editingItem ? await updateRecord('Departments', data) : await createRecord('Departments', data);
-    if (success) { toast.success('บันทึกข้อมูลแผนกสำเร็จ'); closeModal(); }
-    else { toast.error('ไม่สามารถบันทึกข้อมูลได้'); }
+    const res = editingItem ? await updateRecord('Departments', data) : await createRecord('Departments', data);
+    if (res.success) { 
+      toast.success(res.message || 'บันทึกข้อมูลแผนกสำเร็จ'); 
+      closeModal(); 
+    }
+    else { toast.error(res.error || 'ไม่สามารถบันทึกข้อมูลได้'); }
     setIsSubmitting(false);
   };
 
@@ -66,11 +72,11 @@ export default function MasterDataPage() {
     if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล "${itemName}"?`)) {
       const idField = activeTab === 'personnel' ? 'PersonnelID' : 'DepartmentID';
       const sheet = activeTab === 'personnel' ? 'Personnel' : 'Departments';
-      const success = await deleteRecord(sheet, { [idField]: item[idField] });
-      if (success) {
-        toast.success('ลบข้อมูลสำเร็จ');
+      const res = await deleteRecord(sheet, { [idField]: item[idField] });
+      if (res.success) {
+        toast.success(res.message || 'ลบข้อมูลสำเร็จ');
       } else {
-        toast.error('ไม่สามารถลบข้อมูลได้');
+        toast.error(res.error || 'ไม่สามารถลบข้อมูลได้');
       }
     }
   };

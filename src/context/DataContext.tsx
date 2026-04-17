@@ -17,19 +17,22 @@ type DataContextType = {
   transactions: any[];
   rolePermissions: any[];
   settings: any;
+  actionRequests: any[];
   isLoading: boolean;
   error: string | null;
   connStatus: ConnStatus;
   lastConnectedAt: Date | null;
   refreshData: () => Promise<void>;
   hasPermission: (role: string, module: string, action?: 'view' | 'create' | 'edit' | 'delete' | 'approve') => boolean;
-  createRecord: (sheet: string, data: any) => Promise<boolean>;
-  updateRecord: (sheet: string, data: any) => Promise<boolean>;
-  deleteRecord: (sheet: string, idData: any) => Promise<boolean>;
+  createRecord: (sheet: string, data: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
+  updateRecord: (sheet: string, data: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
+  deleteRecord: (sheet: string, idData: any) => Promise<{ success: boolean; isRequest?: boolean; message?: string }>;
   issueAsset: (data: { EquipmentCode: string; Quantity: number; ReceiverName: string; IssuerName: string; ReturnDate?: string }, isAdmin?: boolean) => Promise<boolean>;
   approveTransaction: (transactionId: string) => Promise<boolean>;
   rejectTransaction: (transactionId: string) => Promise<boolean>;
   returnAsset: (transactionId: string) => Promise<boolean>;
+  approveActionRequest: (requestId: string) => Promise<boolean>;
+  rejectActionRequest: (requestId: string) => Promise<boolean>;
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -112,6 +115,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const personnel = React.useMemo(() => Array.isArray(allData?.Personnel) ? allData.Personnel : [], [allData]);
   const departments = React.useMemo(() => Array.isArray(allData?.Departments) ? allData.Departments : [], [allData]);
   const transactions = React.useMemo(() => Array.isArray(allData?.Transactions) ? allData.Transactions : [], [allData]);
+  const actionRequests = React.useMemo(() => Array.isArray(allData?.ActionRequests) ? allData.ActionRequests : [], [allData]);
   const rolePermissions = React.useMemo(() => Array.isArray(allData?.RolePermissions) ? allData.RolePermissions : [], [allData]);
   const settings = React.useMemo(() => {
     return Array.isArray(allData?.Settings) && allData.Settings.length > 0 
@@ -146,10 +150,10 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     }
   });
 
-  const mutate = useCallback(async (action: string, sheet: string, data: any): Promise<{ success: boolean; error?: string }> => {
+  const mutate = useCallback(async (action: string, sheet: string, data: any): Promise<{ success: boolean; error?: string; isRequest?: boolean; message?: string }> => {
     try {
-      await mutation.mutateAsync({ action, sheet, data });
-      return { success: true };
+      const res = await mutation.mutateAsync({ action, sheet, data });
+      return { success: true, isRequest: res.isRequest, message: res.message };
     } catch (err: any) {
       console.error(`Mutation failed [${action} on ${sheet}]:`, err);
       return { success: false, error: err.message };
@@ -193,6 +197,16 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     return res.success;
   }, [mutate, transactions]);
 
+  const approveActionRequest = useCallback(async (requestId: string) => {
+    const res = await mutate('EXECUTE_REQUEST', 'ActionRequests', { RequestID: requestId });
+    return res.success;
+  }, [mutate]);
+
+  const rejectActionRequest = useCallback(async (requestId: string) => {
+    const res = await mutate('REJECT_REQUEST', 'ActionRequests', { RequestID: requestId });
+    return res.success;
+  }, [mutate]);
+
   const refreshData = async () => {
     await refetch();
   };
@@ -206,13 +220,22 @@ function DataProviderContent({ children }: { children: ReactNode }) {
       lastConnectedAt,
       refreshData,
       hasPermission,
-      createRecord: async (sheet: string, data: any) => (await mutate('ADD',    sheet, data)).success,
-      updateRecord: async (sheet: string, data: any) => (await mutate('EDIT',   sheet, data)).success,
-      deleteRecord: async (sheet: string, idData: any) => (await mutate('DELETE', sheet, idData)).success,
+      createRecord: async (sheet: string, data: any) => {
+        return await mutate('ADD', sheet, data);
+      },
+      updateRecord: async (sheet: string, data: any) => {
+        return await mutate('EDIT', sheet, data);
+      },
+      deleteRecord: async (sheet: string, idData: any) => {
+        return await mutate('DELETE', sheet, idData);
+      },
       issueAsset,
       approveTransaction,
       rejectTransaction,
-      returnAsset
+      returnAsset,
+      actionRequests,
+      approveActionRequest,
+      rejectActionRequest
     }}>
       {children}
     </DataContext.Provider>

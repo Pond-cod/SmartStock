@@ -15,9 +15,10 @@ const navItems = [
   { name: 'ทำรายการเบิก', href: '/requisition', icon: Send, module: 'Requisition' },
   { name: 'ประวัติเบิก-คืน', href: '/transactions', icon: History, module: 'Transactions' },
   { name: 'รายงานสรุป', href: '/reports', icon: BarChart3, module: 'Reports' },
-  { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, module: 'Equipments' }, // Reuse Equipment perm for scan
+  { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, module: 'Equipments' },
   { name: 'ข้อมูลหลัก', href: '/master-data', icon: Users, module: 'MasterData' },
   { name: 'ผู้ใช้งานระบบ', href: '/users', icon: Factory, module: 'Users' },
+  { name: 'ศูนย์การอนุมัติ', href: '/settings/approvals', icon: CheckCircle2, module: 'Approvals' },
 ];
 
 export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen: boolean, setMobileOpen: (v: boolean) => void }) {
@@ -51,18 +52,29 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
       </div>
 
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-        {navItems.filter(item => hasPermission(userRole, item.module, 'view')).map((item) => (
+        {navItems.filter(item => {
+          if (item.module === 'Approvals') return ['Admin', 'admin_approve', 'super Admin'].includes(userRole);
+          return hasPermission(userRole, item.module, 'view');
+        }).map((item) => (
           <Link
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
             className={clsx(
-              'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+              'sidebar-nav-item flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group',
               pathname === item.href ? 'bg-[var(--primary)] text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
             )}
           >
-            <item.icon className={clsx('w-5 h-5 flex-shrink-0', pathname === item.href ? 'text-white' : 'text-slate-400 group-hover:text-white')} />
-            <span className="text-sm font-semibold md:hidden lg:block truncate">{item.name}</span>
+            <div className="flex items-center gap-3">
+              <item.icon className={clsx('w-5 h-5 flex-shrink-0', pathname === item.href ? 'text-white' : 'text-slate-400 group-hover:text-white')} />
+              <span className="text-sm font-semibold md:hidden lg:block truncate">{item.name}</span>
+            </div>
+            
+            {item.module === 'Approvals' && useData().actionRequests.filter(r => r.Status === 'Pending').length > 0 && (
+               <div className="md:hidden lg:flex w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center text-[10px] font-black animate-pulse">
+                 {useData().actionRequests.filter(r => r.Status === 'Pending').length}
+               </div>
+            )}
           </Link>
         ))}
       </nav>

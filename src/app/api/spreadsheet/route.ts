@@ -88,6 +88,7 @@ export async function POST(request: Request) {
     let body = await request.json();
     const { action, sheet, data } = body;
 
+    const ALLOWED_SHEETS_ARR = [...ALLOWED_SHEETS];
     if (!sheet || !ALLOWED_SHEETS.has(sheet)) {
       return NextResponse.json({ error: 'ไม่สามารถใช้งาน Sheet นี้ได้' }, { status: 400 });
     }
@@ -102,13 +103,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Super Admin เท่านั้นที่สามารถแก้ไขข้อมูลส่วนนี้ได้' }, { status: 403 });
     }
 
-    if ((sheet === 'Users' || sheet === 'super Admin') && data?.Password) {
-      if (!data.Password.startsWith('$2a$')) {
-        data.Password = await bcrypt.hash(String(data.Password), 10);
+    // ── MAKER-CHECKER REROUTING ──────────────────────────────────────────────
+    
+    let finalAction = action;
+    let finalSheet = sheet;
+    let finalData = data;
+
+    const isDirectAction = action === 'ADD' || action === 'EDIT' || action === 'DELETE';
+    
+    if (isDirectAction) {
+      let needsApproval = false;
+      let targetApprover = 'admin_approve';
+
+      if (callerRole === 'user') {
+        needsApproval = true;
+        targetApprover = 'admin_approve';
+      } else if (callerRole === 'admin_approve' && action === 'DELETE') {
+        needsApproval = true;
+        targetApprover = 'Admin';
+      }
+
+      if (needsApproval && (sheet !== 'Transactions')) { 
+        // Create an Action Request instead of direct execution
+        finalAction = 'ADD';
+        finalSheet = 'ActionRequests';
+        finalData = {
+          RequestID: `REQ-${Date.now()}`,
+          CreatedAt: new Date().toISOString(),
+          RequesterUser: callerUsername,
+          RequesterRole: callerRole,
+          ActionType: action,
+          TargetSheet: sheet,
+          Payload: JSON.stringify(data),
+          Status: 'Pending',
+          TargetApprover: targetApprover,
+          ApproverUser: '',
+          ApprovedAt: ''
+        };
       }
     }
 
-    const payload = { action, sheet, data, token: GAS_SECRET_TOKEN, caller: callerUsername };
+    if ((finalSheet === 'Users' || finalSheet === 'super Admin') && finalData?.Password) {
+      if (!finalData.Password.startsWith('$2a$')) {
+        finalData.Password = await bcrypt.hash(String(finalData.Password), 10);
+      }
+    }
+
+    const payload = { action: finalAction, sheet: finalSheet, data: finalData, token: GAS_SECRET_TOKEN, caller: callerUsername };
     const res = await fetchGASWithRetry(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,6 +157,13 @@ export async function POST(request: Request) {
     });
 
     const result = await res.json();
+    
+    // Supplement result with meta if it was a request
+    if (finalSheet === 'ActionRequests' && result.success) {
+      result.isRequest = true;
+      result.message = 'ส่งคำขอเรียบร้อยแล้ว รอการอนุมัติจาก ' + finalData.TargetApprover;
+    }
+
     return NextResponse.json(result);
   } catch (err: any) {
     const isTimeout = err.name === 'AbortError' || err.message.includes('timeout');

@@ -48,11 +48,12 @@ function doGet(e) {
       Departments: getSheetData('Departments'),
       Transactions: getSheetData('Transactions'),
       RolePermissions: getSheetData('RolePermissions'),
+      ActionRequests: getSheetData('ActionRequests'),
       'super Admin': getSheetData('super Admin')
     };
     
     const resultJson = JSON.stringify(result);
-    cache.put("all_data_json", resultJson, 300); // Cache for 5 minutes
+    cache.put("all_data_json", resultJson, 30); // Faster refresh for approvals
     return ContentService.createTextOutput(resultJson).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -208,6 +209,7 @@ function doPost(e) {
     if (sName === 'Departments') return 'DepartmentID';
     if (sName === 'Transactions') return 'TransactionID';
     if (sName === 'RolePermissions') return 'RoleName';
+    if (sName === 'ActionRequests') return 'RequestID';
     if (sName === 'super Admin') return 'Username';
     return null;
   };
@@ -312,7 +314,77 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({success: true, message: "Transaction processed atomically"})).setMimeType(ContentService.MimeType.JSON);
   }
 
-  return ContentService.createTextOutput(JSON.stringify({success: false, error: "Unknown action"})).setMimeType(ContentService.MimeType.TEXT);
+  // ── APPROVAL EXECUTION ──────────────────────────────────────────────────
+  if (action === 'EXECUTE_REQUEST') {
+    const reqSheet = ss.getSheetByName('ActionRequests');
+    const reqId = data.RequestID || data.ID;
+    const reqIndex = findRowIndex(reqSheet, 'RequestID', reqId);
+    if (reqIndex === -1) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Request not found"})).setMimeType(ContentService.MimeType.JSON);
+    
+    const reqHeaders = reqSheet.getDataRange().getValues()[0];
+    const reqRow = reqSheet.getDataRange().getValues()[reqIndex - 1];
+    
+    const targetAction = reqRow[reqHeaders.indexOf('ActionType')];
+    const targetSheetName = reqRow[reqHeaders.indexOf('TargetSheet')];
+    const targetPayload = JSON.parse(reqRow[reqHeaders.indexOf('Payload')]);
+    
+    const targetActualName = nameMap[targetSheetName] || targetSheetName;
+    const targetSheet = ss.getSheetByName(targetActualName);
+    if (!targetSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Target sheet not found"})).setMimeType(ContentService.MimeType.JSON);
+
+    if (targetAction === 'ADD') {
+      const headers = ensureHeaders(targetSheet, Object.keys(targetPayload));
+      const newRowData = headers.map(h => {
+        if (h === 'CreatedAt' && !targetPayload[h]) return new Date().toISOString();
+        return targetPayload[h] !== undefined ? targetPayload[h] : "";
+      });
+      targetSheet.appendRow(newRowData);
+    } 
+    else if (targetAction === 'EDIT') {
+      const headers = ensureHeaders(targetSheet, Object.keys(targetPayload));
+      const targetIdField = getIdField(targetSheetName);
+      const targetIndex = findRowIndex(targetSheet, targetIdField, targetPayload[targetIdField]);
+      if (targetIndex > -1) {
+        const rows = targetSheet.getDataRange().getValues();
+        const expandedRowValues = new Array(headers.length).fill("");
+        rows[targetIndex-1].forEach((v, i) => expandedRowValues[i] = v);
+        headers.forEach((h, i) => {
+          if (targetPayload[h] !== undefined && h !== 'CreatedAt') expandedRowValues[i] = targetPayload[h];
+        });
+        targetSheet.getRange(targetIndex, 1, 1, headers.length).setValues([expandedRowValues]);
+      }
+    }
+    else if (targetAction === 'DELETE') {
+      const targetIdField = getIdField(targetSheetName);
+      const targetIndex = findRowIndex(targetSheet, targetIdField, targetPayload[targetIdField]);
+      if (targetIndex > -1) targetSheet.deleteRow(targetIndex);
+    }
+
+    // Update Request Status
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('Status') + 1).setValue('Approved');
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('ApproverUser') + 1).setValue(caller);
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('ApprovedAt') + 1).setValue(new Date().toISOString());
+    
+    cache.remove("all_data_json");
+    return ContentService.createTextOutput(JSON.stringify({success: true, message: "Request approved and executed"})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === 'REJECT_REQUEST') {
+    const reqSheet = ss.getSheetByName('ActionRequests');
+    const reqId = data.RequestID || data.ID;
+    const reqIndex = findRowIndex(reqSheet, 'RequestID', reqId);
+    if (reqIndex === -1) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Request not found"})).setMimeType(ContentService.MimeType.JSON);
+
+    const reqHeaders = reqSheet.getDataRange().getValues()[0];
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('Status') + 1).setValue('Rejected');
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('ApproverUser') + 1).setValue(caller);
+    reqSheet.getRange(reqIndex, reqHeaders.indexOf('ApprovedAt') + 1).setValue(new Date().toISOString());
+
+    cache.remove("all_data_json");
+    return ContentService.createTextOutput(JSON.stringify({success: true, message: "Request rejected"})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({success: false, error: "Unknown action"})).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({success: false, error: "System error or busy: " + err.message})).setMimeType(ContentService.MimeType.JSON);
