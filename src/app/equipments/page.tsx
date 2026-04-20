@@ -41,12 +41,19 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           {eq.ImageURL ? (
-            <img src={eq.ImageURL} alt={eq.Name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-400">
-              <Package className="w-5 h-5" />
-            </div>
-          )}
+            <img 
+              src={eq.ImageURL} 
+              alt={eq.Name} 
+              className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" 
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={clsx("w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-400 fallback-icon", eq.ImageURL && "hidden")}>
+            <Package className="w-5 h-5" />
+          </div>
           <div>
             <div className="font-semibold text-slate-800 dark:text-slate-100">{eq.Name}</div>
             {eq.Notes && <div className="text-xs text-slate-400 truncate max-w-[150px] mt-0.5">{eq.Notes}</div>}
@@ -375,10 +382,19 @@ export default function EquipmentsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
             <div className="relative h-64 sm:h-80 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
               {detailsEq.ImageURL ? (
-                <img src={detailsEq.ImageURL} alt={detailsEq.Name} className="w-full h-full object-cover" />
-              ) : (
+                <img 
+                  src={detailsEq.ImageURL} 
+                  alt={detailsEq.Name} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement?.querySelector('.details-fallback')?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={clsx("w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-300 details-fallback", detailsEq.ImageURL && "hidden")}>
                 <Package className="w-24 h-24 text-slate-300 dark:text-slate-700" />
-              )}
+              </div>
               <div className="absolute top-4 right-4 group">
                 <button 
                   onClick={closeDetails} 
