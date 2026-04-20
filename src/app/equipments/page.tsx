@@ -21,7 +21,6 @@ type EquipmentForm = {
   Unit: string;
   PricePerUnit: number;
   Location: string;
-  Location: string;
   Status: string;
   Notes: string;
   ImageURL?: string;
