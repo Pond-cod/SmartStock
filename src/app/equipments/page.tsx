@@ -482,7 +482,12 @@ export default function EquipmentsPage() {
                   <div className="flex items-center gap-4">
                     {previewUrl ? (
                       <div className="relative w-24 h-24 rounded-2xl border-2 border-slate-200 overflow-hidden group">
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <img 
+                          src={previewUrl} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover" 
+                          onError={() => setPreviewUrl('')}
+                        />
                         <button type="button" onClick={() => { setImageFile(null); setPreviewUrl(''); }} className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white"><X className="w-6 h-6"/></button>
                       </div>
                     ) : (

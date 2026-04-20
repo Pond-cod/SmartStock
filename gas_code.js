@@ -116,6 +116,7 @@ function doPost(e) {
       var folder = DriveApp.getFolderById(folderId);
       var blob = Utilities.newBlob(Utilities.base64Decode(data.base64.split(',')[1] || data.base64), 'image/jpeg', data.fileName || 'IMG.jpg');
       var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       var fileId = file.getId();
       var imageUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
 
