@@ -26,10 +26,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoadingAuth && currentUser?.MustChangePassword && pathname !== '/change-password' && pathname !== '/login') {
+    const mustChange = currentUser?.MustChangePassword === true || String(currentUser?.MustChangePassword).toUpperCase() === 'TRUE';
+    if (!isLoadingAuth && mustChange && window.location.pathname !== '/change-password' && window.location.pathname !== '/login') {
       router.push('/change-password');
     }
-  }, [currentUser, pathname, isLoadingAuth, router]);
+  }, [currentUser, isLoadingAuth, router]);
 
   useEffect(() => {
     const checkAuth = async () => {

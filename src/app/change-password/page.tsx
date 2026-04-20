@@ -21,6 +21,14 @@ export default function ChangePasswordPage() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const newPassword = watch('newPassword');
 
+  React.useEffect(() => {
+    if (newPassword && /\s/.test(newPassword)) {
+      setErrorMsg('ระวัง! คุณพิมพ์เว้นวรรค (Spacebar) ในรหัสผ่าน');
+    } else if (errorMsg === 'ระวัง! คุณพิมพ์เว้นวรรค (Spacebar) ในรหัสผ่าน') {
+      setErrorMsg('');
+    }
+  }, [newPassword, errorMsg]);
+
   const onSubmit = async (data: any) => {
     if (!currentUser) return;
     setIsSubmitting(true);
@@ -81,10 +89,15 @@ export default function ChangePasswordPage() {
                   <input
                     {...register('newPassword', {
                       required: 'กรุณาระบุรหัสผ่านใหม่',
-                      minLength: { value: 6, message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' }
+                      minLength: { value: 8, message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' },
+                      validate: {
+                        hasUpper: (val) => /[A-Z]/.test(val) || 'ต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว',
+                        hasLower: (val) => /[a-z]/.test(val) || 'ต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว',
+                        noSpace: (val) => !/\s/.test(val) || 'ห้ามเว้นวรรคในรหัสผ่าน'
+                      }
                     })}
                     type={showPass ? 'text' : 'password'}
-                    placeholder="ขั้นต่ำ 6 ตัวอักษร"
+                    placeholder="ขั้นต่ำ 8 ตัวอักษร (พิมพ์เล็กและใหญ่)"
                     className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium"
                   />
                   <button

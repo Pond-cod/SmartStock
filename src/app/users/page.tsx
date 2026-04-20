@@ -148,6 +148,38 @@ export default function UsersPage() {
     else toast.error('ไม่สามารถลบผู้ใช้งานได้');
   };
 
+  const generateStrongPassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyz";
+    const uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const nums = "0123456789";
+    const specials = "!@#$%^&*";
+    let p = "";
+    p += uppers[Math.floor(Math.random() * uppers.length)];
+    p += chars[Math.floor(Math.random() * chars.length)];
+    p += nums[Math.floor(Math.random() * nums.length)];
+    p += specials[Math.floor(Math.random() * specials.length)];
+    const all = chars + uppers + nums + specials;
+    for(let i=0; i<4; i++) {
+        p += all[Math.floor(Math.random() * all.length)];
+    }
+    return p.split('').sort(() => 0.5 - Math.random()).join('');
+  };
+
+  const handleResetPassword = async (username: string) => {
+    if (!confirm(`ยืนยันการตั้งรหัสผ่านใหม่ให้ ${username} ใช่หรือไม่?\nหลังจากล็อกอินครั้งถัดไป ระบบจะบังคับให้ตั้งรหัสใหม่ทันที`)) return;
+    
+    const np = generateStrongPassword();
+    const payload = { Username: username, Password: np, MustChangePassword: 'TRUE' };
+    
+    const res = await updateRecord(currentSheet, payload);
+    if (res.success) {
+      window.prompt(`✅ รีเซ็ตรหัสผ่านสำเร็จ!\nให้คัดลอกรหัสผ่านใหม่ด้านล่างนี้ ส่งให้ ${username} เพื่อล็อกอินเข้าสู่ระบบ:`, np);
+      toast.success(`ระบบได้ตั้งค่ายืนยันให้เปลี่ยนรหัสผ่านครั้งถัดไปสำหรับ ${username} แล้ว`);
+    } else {
+      toast.error('ไม่สามารถรีเซ็ตรหัสผ่านได้');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -225,9 +257,18 @@ export default function UsersPage() {
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button 
+                    onClick={() => handleResetPassword(user.Username)} 
+                    disabled={!isSuper && user.Role === 'Admin'}
+                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-30"
+                    title="รีเซ็ตรหัสผ่าน"
+                  >
+                    <Key className="w-4 h-4" />
+                  </button>
+                  <button 
                     onClick={() => openModal(user)} 
                     disabled={!isSuper && user.Role === 'Admin'}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30"
+                    title="แก้ไขผู้ใช้งาน"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -235,6 +276,7 @@ export default function UsersPage() {
                     onClick={() => handleDelete(user.Username)} 
                     disabled={(activeTab === 'standard' && user.Username === 'admin') || (activeTab === 'super' && user.Username === currentUser.Username) || (!isSuper && user.Role === 'Admin')}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                    title="ลบผู้ใช้งาน"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

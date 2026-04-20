@@ -48,7 +48,7 @@ function DiffVisualizer({ diffStr }: { diffStr: string }) {
 
 export default function ApprovalCenterPage() {
   const { actionRequests, approveActionRequest, rejectActionRequest, isLoading, refreshData, hasPermission } = useData();
-  const { currentUser } = useAuth();
+  const { currentUser, isLoadingAuth } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Pending' | 'Approved' | 'Rejected'>('Pending');
@@ -56,9 +56,13 @@ export default function ApprovalCenterPage() {
 
   const canAccess = currentUser && hasPermission(currentUser.Role, 'ActionRequests', 'view');
   
-  if (!canAccess && typeof window !== 'undefined') {
+  if (!isLoadingAuth && !canAccess && typeof window !== 'undefined') {
     router.push('/');
     return null;
+  }
+
+  if (isLoadingAuth) {
+    return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
   const filteredRequests = actionRequests
