@@ -109,9 +109,6 @@ function doPost(e) {
 
   let lock = LockService.getScriptLock();
   try {
-    lock.waitLock(15000); // Wait up to 15 seconds for lock
-    const cache = CacheService.getScriptCache();
-    
     if (action === 'UPLOAD_IMAGE') {
       var folderId = '1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97';
       var folder = DriveApp.getFolderById(folderId);
@@ -125,12 +122,15 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (!sheetName) {
-      lock.releaseLock();
+    lock.waitLock(15000); // Wait up to 15 seconds for lock
+    const cache = CacheService.getScriptCache();
+    
+    if (!sheetName || sheetName === 'NONE') {
+      if (lock) lock.releaseLock();
       return ContentService.createTextOutput(JSON.stringify({success: false, error: "Missing sheet name"})).setMimeType(ContentService.MimeType.JSON);
     }
   
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   
   // Mapping internal names to actual sheet names in the spreadsheet
   const nameMap = {

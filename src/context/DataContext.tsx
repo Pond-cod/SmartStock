@@ -287,12 +287,18 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         resolve({ success: true, url: result.url });
       } catch (err: any) {
         const duration = Date.now() - startTime;
-        console.error("Upload Error:", err, "Duration:", duration);
+        console.error("Upload Error Details:", err, "Duration:", duration);
         
         let msg = err.message || "Network error";
-        // If it's a generic fetch error or 504, and it took > 8 seconds, it's likely a Vercel timeout
+        // If it's a generic fetch error or 504/timeout, and it took > 8 seconds, it's likely a Vercel timeout
         if (duration > 8000 && (msg === "Failed to fetch" || msg.includes("Network error") || msg.includes("Timeout"))) {
-          msg = "ระบบกำลังประมวลผลในพื้นหลัง (Vercel Timeout): ภาพของคุณน่าจะถูกบันทึกสำเร็จแล้ว กรุณาระบุรหัสพัสดุเดิมแล้วกดบันทึกใหม่อีกครั้งเพื่อยืนยัน";
+          // Special return object for optimistic handling
+          resolve({ 
+            success: false, 
+            isTimeout: true,
+            error: "ระบบกำลังประมวลผลรูปภาพในพื้นหลัง (Vercel Timeout): ภาพของคุณน่าจะถูกบันทึกสำเร็จแล้ว กรุณาระบุรหัสพัสดุเดิมแล้วกดบันทึกใหม่อีกครั้งเพื่อยืนยัน"
+          });
+          return;
         }
         
         resolve({ success: false, error: msg });

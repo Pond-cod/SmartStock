@@ -216,15 +216,14 @@ export default function EquipmentsPage() {
         const uploadRes = await uploadImage(imageFile);
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
+        } else if (uploadRes.isTimeout) {
+          // Optimistic Success: Show orange toast and allow the user to save record 
+          // but inform them that the image URL might be missing initially.
+          toast.warning("📷 บันทึกภาพในพื้นหลังสำเร็จแล้ว! คุณสามารถกดปุ่มบันทึกอีกครั้งเพื่อเสร็จสิ้นขั้นตอน (ภาพจะแสดงผลในระบบภายใน 10-20 วินาที)");
+          setIsSubmitting(false); // Allow them to click "Save" again
+          return;
         } else {
-          const isTimeout = uploadRes.error?.includes('Timeout');
-          if (isTimeout) {
-            toast.warning(`บันทึกภาพสำเร็จล่าช้า: ${uploadRes.error}`);
-            // If it's a timeout, we don't have the URL, but the user can try to save without it 
-            // OR we can tell them to wait. For now, let's stop and let them read the toast.
-          } else {
-            toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
-          }
+          toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
           setIsSubmitting(false);
           return;
         }
