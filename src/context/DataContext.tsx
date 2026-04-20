@@ -212,36 +212,80 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     return res.success;
   }, [mutate]);
 
-  const uploadImage = useCallback(async (file: File) => {
-    return new Promise<{ success: boolean; url?: string; error?: string }>((resolve) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result as string;
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              base64,
-              mimeType: file.type,
-              fileName: file.name
-            })
-          });
-          
-          if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error || `HTTP ${res.status}`);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1024;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
           }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
           
-          const result = await res.json();
-          resolve({ success: true, url: result.url });
-        } catch (err: any) {
-          console.error("Upload Error:", err);
-          resolve({ success: false, error: err.message });
-        }
+          // Compress to JPEG with 0.8 quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image for compression'));
       };
-      reader.onerror = () => resolve({ success: false, error: 'Failed to read file' });
+      reader.onerror = () => reject(new Error('Failed to read file'));
+    });
+  };
+
+  const uploadImage = useCallback(async (file: File) => {
+    return new Promise<{ success: boolean; url?: string; error?: string }>(async (resolve) => {
+      try {
+        // Compress image first to avoid Vercel/GAS body size limits
+        const compressedBase64 = await compressImage(file);
+        
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            base64: compressedBase64,
+            mimeType: 'image/jpeg',
+            fileName: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+          })
+        });
+        
+        if (!res.ok) {
+          let errorText = `HTTP ${res.status}`;
+          try {
+            const errData = await res.json();
+            errorText = errData.error || errorText;
+          } catch (e) {
+            // Handle cases where response isn't JSON (like 413 Payload Too Large)
+            if (res.status === 413) errorText = "ไฟล์รูปภาพใหญ่เกินไป (Payload Too Large)";
+          }
+          throw new Error(errorText);
+        }
+        
+        const result = await res.json();
+        resolve({ success: true, url: result.url });
+      } catch (err: any) {
+        console.error("Upload Error:", err);
+        resolve({ success: false, error: err.message || "Network error" });
+      }
     });
   }, []);
 
