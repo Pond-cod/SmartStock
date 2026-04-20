@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const payload = {
       action: 'UPLOAD_IMAGE',
-      sheet: 'NONE', // Just to satisfy any middle layers, though our script doesn't strictly check if action is UPLOAD_IMAGE
+      sheet: 'NONE', 
       token: gasSecretToken,
       data: {
         base64: body.base64,
@@ -34,18 +34,26 @@ export async function POST(request: Request) {
       }
     };
 
+    // Increase timeout for image upload to 60 seconds
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     const res = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     const result = await res.json();
     return NextResponse.json(result);
   } catch (err: any) {
+    const isTimeout = err.name === 'AbortError';
     return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + err.message },
-      { status: 500 }
+      { error: isTimeout ? 'อัปโหลดรูปภาพล่าช้ากว่ากำหนด (Timeout 60s) กรุณาลองใหม่อีกครั้ง' : 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + err.message },
+      { status: isTimeout ? 504 : 500 }
     );
   }
 }

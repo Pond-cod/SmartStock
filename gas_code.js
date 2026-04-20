@@ -113,23 +113,24 @@ function doPost(e) {
     const cache = CacheService.getScriptCache();
     
     if (action === 'UPLOAD_IMAGE') {
-      let folder;
+      var folderId = '1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97';
+      var folder;
       try {
-        folder = DriveApp.getFolderById('1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97');
-      } catch (err) {
-        let folders = DriveApp.getFoldersByName('Inventory_Images');
-        folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Inventory_Images');
+        folder = DriveApp.getFolderById(folderId);
+      } catch (e) {
+        folder = DriveApp.getRootFolder();
       }
       
-      const base64Data = data.base64.split(',')[1] || data.base64;
-      const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), data.mimeType || 'image/png', data.fileName || ('IMG_' + Date.now() + '.png'));
-      const file = folder.createFile(blob);
+      var base64Data = data.base64.split(',')[1] || data.base64;
+      var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), data.mimeType || 'image/png', data.fileName || ('IMG_' + Date.now() + '.png'));
+      var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      
-      const fileId = file.getId();
-      const directUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
-      
-      return ContentService.createTextOutput(JSON.stringify({success: true, url: directUrl, fileId: fileId})).setMimeType(ContentService.MimeType.JSON);
+      var fileId = file.getId();
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        url: "https://drive.google.com/uc?export=download&id=" + fileId,
+        fileId: fileId 
+      })).setMimeType(ContentService.MimeType.JSON);
     }
 
     if (!sheetName) {

@@ -219,19 +219,31 @@ function DataProviderContent({ children }: { children: ReactNode }) {
       reader.onload = async () => {
         try {
           const base64 = reader.result as string;
-          const res = await mutation.mutateAsync({
-            action: 'UPLOAD_IMAGE',
-            sheet: 'Equipments',
-            data: { base64, mimeType: file.type, fileName: file.name }
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              base64,
+              mimeType: file.type,
+              fileName: file.name
+            })
           });
-          resolve({ success: true, url: (res as any).url });
+          
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || `HTTP ${res.status}`);
+          }
+          
+          const result = await res.json();
+          resolve({ success: true, url: result.url });
         } catch (err: any) {
+          console.error("Upload Error:", err);
           resolve({ success: false, error: err.message });
         }
       };
       reader.onerror = () => resolve({ success: false, error: 'Failed to read file' });
     });
-  }, [mutation]);
+  }, []);
 
   const refreshData = async () => {
     await refetch();
