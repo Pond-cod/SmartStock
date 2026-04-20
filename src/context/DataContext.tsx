@@ -34,6 +34,7 @@ type DataContextType = {
   returnAsset: (transactionId: string) => Promise<boolean>;
   approveActionRequest: (requestId: string) => Promise<boolean>;
   rejectActionRequest: (requestId: string) => Promise<boolean>;
+  uploadImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -98,8 +99,10 @@ function DataProviderContent({ children }: { children: ReactNode }) {
       return data;
     },
     enabled: isAuthenticated, // Only fetch when user is logged in
-    staleTime: 60000,
-    refetchInterval: 120000,
+    staleTime: 5000,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 2,
     placeholderData: () => {
       try {
@@ -209,6 +212,27 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     return res.success;
   }, [mutate]);
 
+  const uploadImage = useCallback(async (file: File) => {
+    return new Promise<{ success: boolean; url?: string; error?: string }>((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          const res = await mutation.mutateAsync({
+            action: 'UPLOAD_IMAGE',
+            sheet: 'Equipments',
+            data: { base64, mimeType: file.type, fileName: file.name }
+          });
+          resolve({ success: true, url: (res as any).url });
+        } catch (err: any) {
+          resolve({ success: false, error: err.message });
+        }
+      };
+      reader.onerror = () => resolve({ success: false, error: 'Failed to read file' });
+    });
+  }, [mutation]);
+
   const refreshData = async () => {
     await refetch();
   };
@@ -237,7 +261,8 @@ function DataProviderContent({ children }: { children: ReactNode }) {
       returnAsset,
       actionRequests,
       approveActionRequest,
-      rejectActionRequest
+      rejectActionRequest,
+      uploadImage
     }}>
       {children}
     </DataContext.Provider>

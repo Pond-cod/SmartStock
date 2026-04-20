@@ -113,8 +113,13 @@ function doPost(e) {
     const cache = CacheService.getScriptCache();
     
     if (action === 'UPLOAD_IMAGE') {
-      let folders = DriveApp.getFoldersByName('Inventory_Images');
-      let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Inventory_Images');
+      let folder;
+      try {
+        folder = DriveApp.getFolderById('1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97');
+      } catch (err) {
+        let folders = DriveApp.getFoldersByName('Inventory_Images');
+        folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Inventory_Images');
+      }
       
       const base64Data = data.base64.split(',')[1] || data.base64;
       const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), data.mimeType || 'image/png', data.fileName || ('IMG_' + Date.now() + '.png'));

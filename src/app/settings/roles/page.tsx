@@ -15,6 +15,7 @@ const MODULES = [
   { id: 'Reports', name: 'รายงานสรุป' },
   { id: 'MasterData', name: 'ข้อมูลหลัก (บุคลากร/แผนก)' },
   { id: 'Users', name: 'จัดการผู้ใช้งาน' },
+  { id: 'ActionRequests', name: 'ศูนย์การอนุมัติ' },
 ];
 
 const ACTIONS = [

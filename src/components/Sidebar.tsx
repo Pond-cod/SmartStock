@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield, CheckCircle2, ShieldAlert, ScanLine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -18,14 +18,14 @@ const navItems = [
   { name: 'สแกน QR Code', href: '/qr-scan', icon: QrCode, module: 'Equipments' },
   { name: 'ข้อมูลหลัก', href: '/master-data', icon: Users, module: 'MasterData' },
   { name: 'ผู้ใช้งานระบบ', href: '/users', icon: Factory, module: 'Users' },
-  { name: 'ศูนย์การอนุมัติ', href: '/settings/approvals', icon: CheckCircle2, module: 'Approvals' },
+  { name: 'ศูนย์การอนุมัติ', href: '/settings/approvals', icon: CheckCircle2, module: 'ActionRequests' },
 ];
 
 export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen: boolean, setMobileOpen: (v: boolean) => void }) {
   const pathname = usePathname();
   const { currentUser } = useAuth();
   const dataContext = useData();
-  const { hasPermission, actionRequests } = dataContext;
+  const { hasPermission, actionRequests, connStatus, lastConnectedAt } = dataContext;
   const userRole = currentUser?.Role || 'user';
 
   const SidebarContent = () => (
@@ -54,7 +54,6 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
 
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {navItems.filter(item => {
-          if (item.module === 'Approvals') return ['Admin', 'admin_approve', 'super Admin'].includes(userRole);
           return hasPermission(userRole, item.module, 'view');
         }).map((item) => (
           <Link
@@ -71,7 +70,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
               <span className="text-sm font-semibold md:hidden lg:block truncate">{item.name}</span>
             </div>
 
-            {item.module === 'Approvals' && actionRequests.filter((r: any) => r.Status === 'Pending').length > 0 && (
+            {item.module === 'ActionRequests' && actionRequests.filter((r: any) => r.Status === 'Pending').length > 0 && (
               <div className="md:hidden lg:flex w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center text-[10px] font-black animate-pulse">
                 {actionRequests.filter((r: any) => r.Status === 'Pending').length}
               </div>
@@ -105,6 +104,17 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
               <span className="text-sm font-semibold md:hidden lg:block truncate">จัดการสิทธิ์</span>
             </Link>
             <Link
+              href="/scan"
+              onClick={() => setMobileOpen(false)}
+              className={clsx(
+                'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+                pathname === '/scan' ? 'bg-[var(--primary)] text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <ScanLine className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
+              <span className="text-sm font-semibold md:hidden lg:block truncate">สแกนเบิกพัสดุ (QR)</span>
+            </Link>
+            <Link
               href="/settings"
               onClick={() => setMobileOpen(false)}
               className={clsx(
@@ -129,7 +139,16 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
           </>
         )}
 
-        <div className="pt-4 px-3 md:hidden lg:block">
+        <div className="pt-4 px-3 md:hidden lg:block space-y-3">
+          <div className="flex items-center justify-center gap-2 px-2 py-1.5 rounded-xl bg-black/20 border border-white/5" title="Real-time Syncing Active">
+            <span className="relative flex h-2 w-2 mb-[1px]">
+              <span className={clsx("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", connStatus === 'error' ? 'bg-red-400' : 'bg-emerald-400')}></span>
+              <span className={clsx("relative inline-flex rounded-full h-2 w-2", connStatus === 'error' ? 'bg-red-500' : 'bg-emerald-500')}></span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 truncate">
+              {connStatus === 'error' ? 'ขาดการเชื่อมต่อ' : lastConnectedAt ? `อัปเดต: ${lastConnectedAt.toLocaleTimeString('th-TH')}` : 'กำลังเชื่อมต่อ...'}
+            </span>
+          </div>
           <p className="text-[9px] text-slate-600 font-bold text-center tracking-tighter">Powered by DeeDevIOT.</p>
         </div>
       </div>

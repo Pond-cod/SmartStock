@@ -47,17 +47,17 @@ function DiffVisualizer({ diffStr }: { diffStr: string }) {
 }
 
 export default function ApprovalCenterPage() {
-  const { actionRequests, approveActionRequest, rejectActionRequest, isLoading, refreshData } = useData();
+  const { actionRequests, approveActionRequest, rejectActionRequest, isLoading, refreshData, hasPermission } = useData();
   const { currentUser } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Pending' | 'Approved' | 'Rejected'>('Pending');
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  const canAccess = currentUser && ['Admin', 'admin_approve', 'super Admin'].includes(currentUser.Role);
+  const canAccess = currentUser && hasPermission(currentUser.Role, 'ActionRequests', 'view');
   
-  if (!canAccess) {
-    if (typeof window !== 'undefined') router.push('/');
+  if (!canAccess && typeof window !== 'undefined') {
+    router.push('/');
     return null;
   }
 

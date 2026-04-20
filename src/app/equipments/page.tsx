@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { Plus, Edit2, Trash2, X, AlertCircle, Search, Package, Download, QrCode, Printer, Send } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, AlertCircle, Search, Package, Download, QrCode, Printer, Send, Camera } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import clsx from 'clsx';
 import Tooltip from '@/components/Tooltip';
@@ -21,8 +21,10 @@ type EquipmentForm = {
   Unit: string;
   PricePerUnit: number;
   Location: string;
+  Location: string;
   Status: string;
   Notes: string;
+  ImageURL?: string;
 };
 
 const inputCls = (hasError: boolean) =>
@@ -38,8 +40,19 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
       <td className="px-6 py-4 font-mono text-xs font-bold text-slate-500">{eq.EquipmentCode}</td>
       <td className="px-6 py-4">
-        <div className="font-semibold text-slate-800 dark:text-slate-100">{eq.Name}</div>
-        {eq.Notes && <div className="text-xs text-slate-400 truncate max-w-[200px] mt-0.5">{eq.Notes}</div>}
+        <div className="flex items-center gap-3">
+          {eq.ImageURL ? (
+            <img src={eq.ImageURL} alt={eq.Name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-400">
+              <Package className="w-5 h-5" />
+            </div>
+          )}
+          <div>
+            <div className="font-semibold text-slate-800 dark:text-slate-100">{eq.Name}</div>
+            {eq.Notes && <div className="text-xs text-slate-400 truncate max-w-[150px] mt-0.5">{eq.Notes}</div>}
+          </div>
+        </div>
       </td>
       <td className="px-6 py-4 hidden sm:table-cell">
         <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{eq.CategoryName || 'ไม่ระบุหมวดหมู่'}</span>
@@ -98,7 +111,7 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
 EquipmentRow.displayName = 'EquipmentRow';
 
 export default function EquipmentsPage() {
-  const { equipments, categories, isLoading, createRecord, updateRecord, deleteRecord } = useData();
+  const { equipments, categories, isLoading, createRecord, updateRecord, deleteRecord, uploadImage } = useData();
   const { currentUser } = useAuth();
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,6 +119,8 @@ export default function EquipmentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [qrEquipment, setQrEquipment] = useState<any>(null);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -153,24 +168,40 @@ export default function EquipmentsPage() {
   const openModal = (eq: any = null) => {
     if (!canEdit) return;
     setEditingEq(eq);
+    setImageFile(null);
+    setPreviewUrl(eq?.ImageURL || null);
     if (eq) {
       reset(eq);
     } else {
       reset({
         EquipmentCode: `EQ-${Date.now().toString().slice(-6)}`,
-        Name: '', CategoryName: '', Quantity: 1, Unit: 'ชิ้น', PricePerUnit: 0, Location: '', Status: 'Active', Notes: ''
+        Name: '', CategoryName: '', Quantity: 1, Unit: 'ชิ้น', PricePerUnit: 0, Location: '', Status: 'Active', Notes: '', ImageURL: ''
       });
     }
     setErrorMsg('');
     setIsModalOpen(true);
   };
 
-  const closeModal = () => { setIsModalOpen(false); setEditingEq(null); reset(); };
+  const closeModal = () => { setIsModalOpen(false); setEditingEq(null); setImageFile(null); setPreviewUrl(null); reset(); };
 
   const onSubmit = async (data: EquipmentForm) => {
     setIsSubmitting(true);
     setErrorMsg('');
-    const res = editingEq ? await updateRecord('Equipments', data) : await createRecord('Equipments', data);
+    
+    let finalImageUrl = data.ImageURL || '';
+    if (imageFile) {
+      const uploadRes = await uploadImage(imageFile);
+      if (uploadRes.success && uploadRes.url) {
+        finalImageUrl = uploadRes.url;
+      } else {
+        toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error}`);
+        // Optional: proceed without image, or stop. Let's proceed.
+      }
+    }
+    
+    const finalData = { ...data, ImageURL: finalImageUrl };
+    const res = editingEq ? await updateRecord('Equipments', finalData) : await createRecord('Equipments', finalData);
+    
     if (res.success) {
       toast.success(editingEq ? `แก้ไขข้อมูล "${data.Name}" สำเร็จ` : `เพิ่มพัสดุ "${data.Name}" เข้าสู่ระบบแล้ว`);
       closeModal();
@@ -299,11 +330,42 @@ export default function EquipmentsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{editingEq ? 'แก้ไขข้อมูลพัสดุ' : 'เพิ่มพัสดุใหม่เข้าสู่ระบบ'}</h2>
-              <button onClick={closeModal} className="text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full p-2 transition-colors"><X className="w-5 h-5"/></button>
+              <button disabled={isSubmitting} onClick={closeModal} className="text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full p-2 transition-colors disabled:opacity-50"><X className="w-5 h-5"/></button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="p-6">
               {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start mb-6 border border-red-100"><AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />{errorMsg}</div>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">รูปภาพพัสดุ (อัปโหลดขึ้น Google Drive)</label>
+                  <div className="flex items-center gap-4">
+                    {previewUrl ? (
+                      <div className="relative w-24 h-24 rounded-2xl border-2 border-slate-200 overflow-hidden group">
+                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => { setImageFile(null); setPreviewUrl(''); }} className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white"><X className="w-6 h-6"/></button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                        <Camera className="w-8 h-8" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setImageFile(e.target.files[0]);
+                            setPreviewUrl(URL.createObjectURL(e.target.files[0]));
+                          }
+                        }}
+                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 text-slate-500 w-full" 
+                      />
+                      <p className="text-[10px] text-slate-400 mt-2">รองรับไฟล์ JPG, PNG หรือถ่ายจากกล้องมือถือโดยตรง</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase mb-1 ml-1">รหัสพัสดุ <span className="text-red-500">*</span></label>
                   <input {...register('EquipmentCode', { required: 'กรุณาระบุรหัสพัสดุ' })} className={`${inputCls(!!errors.EquipmentCode)} ${editingEq ? 'opacity-60' : ''}`} readOnly={!!editingEq} />

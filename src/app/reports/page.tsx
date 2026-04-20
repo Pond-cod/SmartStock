@@ -42,55 +42,80 @@ export default function ReportsPage() {
     xlsx.writeFile(workbook, `report_inventory_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2"><BarChart3 className="w-6 h-6 text-primary" /> รายงานสรุปพัสดุ</h1>
-          <p className="text-sm text-slate-500 font-medium">สรุปข้อมูลภาพรวมและมูลค่าพัสดุทั้งหมดในระบบ</p>
+          <p className="text-sm text-slate-500 font-medium print:hidden">สรุปข้อมูลภาพรวมและมูลค่าพัสดุทั้งหมดในระบบ</p>
         </div>
-        <button onClick={handleExportExcel} className="btn-primary rounded-2xl px-6 shadow-lg"><Download className="w-4 h-4 mr-2" /> ส่งออก Excel (.xlsx)</button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between">
-           <div><p className="text-xs font-black text-slate-400 uppercase tracking-widest">จำนวนรวมทุกรายการ</p><h3 className="text-3xl font-black text-slate-800 mt-1">{totals.qty.toLocaleString()}</h3></div>
-           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Package className="w-8 h-8" /></div>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between">
-           <div><p className="text-xs font-black text-slate-400 uppercase tracking-widest">มูลค่ารวมพัสดุทั้งหมด</p><h3 className="text-3xl font-black text-slate-800 mt-1">฿{totals.val.toLocaleString()}</h3></div>
-           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><FileText className="w-8 h-8" /></div>
+        <div className="flex gap-2 print:hidden">
+          <button onClick={handlePrintPDF} className="btn-secondary rounded-2xl px-6"><Printer className="w-4 h-4 mr-2" /> พิมพ์ PDF</button>
+          <button onClick={handleExportExcel} className="btn-primary rounded-2xl px-6 shadow-lg"><Download className="w-4 h-4 mr-2" /> ส่งออก Excel</button>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[10px] font-black">
+      <div className="hidden print:block mb-8 text-center">
+        <h2 className="text-xl font-bold">เอกสารรายงานสรุปพัสดุ คงคลัง (Inventory Report)</h2>
+        <p className="text-sm text-gray-500">พิมพ์เมื่อ: {new Date().toLocaleString('th-TH')} โดยระบบ SmartStock</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4 print:mb-6">
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between print:rounded-lg print:border-gray-300 print:shadow-none">
+           <div><p className="text-xs font-black text-slate-400 uppercase tracking-widest print:text-gray-600">จำนวนรวมทุกรายการ</p><h3 className="text-3xl font-black text-slate-800 mt-1 print:text-gray-900">{totals.qty.toLocaleString()}</h3></div>
+           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center print:hidden"><Package className="w-8 h-8" /></div>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between print:rounded-lg print:border-gray-300 print:shadow-none">
+           <div><p className="text-xs font-black text-slate-400 uppercase tracking-widest print:text-gray-600">มูลค่ารวมพัสดุทั้งหมด</p><h3 className="text-3xl font-black text-slate-800 mt-1 print:text-gray-900">฿{totals.val.toLocaleString()}</h3></div>
+           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center print:hidden"><FileText className="w-8 h-8" /></div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden print:rounded-none print:border-none print:shadow-none">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-left text-sm whitespace-nowrap print:whitespace-normal print:w-full print:border-collapse">
+            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[10px] font-black print:bg-gray-100 print:text-black">
               <tr>
-                <th className="px-6 py-4">รหัส</th>
-                <th className="px-6 py-4">รายการ</th>
-                <th className="px-6 py-4 text-right">จำนวน</th>
-                <th className="px-6 py-4 text-right">ราคา/หน่วย</th>
-                <th className="px-6 py-4 text-right">ราคารวม</th>
-                <th className="px-6 py-4 text-center">สถานะ</th>
+                <th className="px-6 py-4 print:py-2 print:px-2 print:border">รหัส</th>
+                <th className="px-6 py-4 print:py-2 print:px-2 print:border">รายการ</th>
+                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">จำนวน</th>
+                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">ราคา/หน่วย</th>
+                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">ราคารวม</th>
+                <th className="px-6 py-4 text-center print:py-2 print:px-2 print:border">สถานะ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 print:divide-y-0">
               {reportData.map(eq => (
-                <tr key={eq.EquipmentCode} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-400 text-xs">{eq.EquipmentCode}</td>
-                  <td className="px-6 py-4 font-bold text-slate-700">{eq.Name}</td>
-                  <td className="px-6 py-4 text-right font-medium">{eq.Quantity} <span className="text-[10px] text-slate-400">{eq.Unit}</span></td>
-                  <td className="px-6 py-4 text-right">฿{Number(eq.PricePerUnit).toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right font-black text-slate-800">฿{eq.TotalValue.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${eq.Status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{eq.Status}</span>
+                <tr key={eq.EquipmentCode} className="hover:bg-slate-50/50 transition-colors print:border-b print:border-gray-200">
+                  <td className="px-6 py-4 font-bold text-slate-400 text-xs print:py-2 print:px-2 print:border print:text-gray-800">{eq.EquipmentCode}</td>
+                  <td className="px-6 py-4 font-bold text-slate-700 print:py-2 print:px-2 print:border print:text-black">{eq.Name}</td>
+                  <td className="px-6 py-4 text-right font-medium print:py-2 print:px-2 print:border">{eq.Quantity} <span className="text-[10px] text-slate-400 print:text-gray-600">{eq.Unit}</span></td>
+                  <td className="px-6 py-4 text-right print:py-2 print:px-2 print:border">฿{Number(eq.PricePerUnit).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-black text-slate-800 print:py-2 print:px-2 print:border print:text-black">฿{eq.TotalValue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-center print:py-2 print:px-2 print:border">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black print:bg-transparent print:text-black print:p-0 print:font-normal ${eq.Status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{eq.Status}</span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          
+          <div className="hidden print:flex justify-end mt-20 gap-32 pr-10">
+             <div className="text-center">
+                <div className="w-32 border-b border-black mb-2 mx-auto"></div>
+                <p className="text-sm font-bold">(........................................................)</p>
+                <p className="text-xs text-gray-600 mt-1">ผู้จัดทำรายงาน</p>
+             </div>
+             <div className="text-center">
+                <div className="w-32 border-b border-black mb-2 mx-auto"></div>
+                <p className="text-sm font-bold">(........................................................)</p>
+                <p className="text-xs text-gray-600 mt-1">ผู้อนุมัติ / ผู้ตรวจสอบ</p>
+             </div>
+          </div>
         </div>
       </div>
     </div>
