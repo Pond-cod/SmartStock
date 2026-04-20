@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       data: {
         base64: body.base64,
         fileName: body.fileName || `IMG_${Date.now()}.png`,
-        mimeType: body.mimeType || 'image/png'
+        mimeType: body.mimeType || 'image/png',
+        equipmentCode: body.equipmentCode
       }
     };
 

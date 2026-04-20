@@ -109,15 +109,31 @@ function doPost(e) {
 
   let lock = LockService.getScriptLock();
   try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
     if (action === 'UPLOAD_IMAGE') {
       var folderId = '1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97';
       var folder = DriveApp.getFolderById(folderId);
       var blob = Utilities.newBlob(Utilities.base64Decode(data.base64.split(',')[1] || data.base64), 'image/jpeg', data.fileName || 'IMG.jpg');
       var file = folder.createFile(blob);
       var fileId = file.getId();
+      var imageUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+
+      // AUTOMATIC LINKING: If equipmentCode is provided, update the sheet immediately
+      if (data.equipmentCode) {
+        var eqSheet = ss.getSheetByName('Equipments');
+        var eqData = eqSheet.getDataRange().getValues();
+        for (var i = 1; i < eqData.length; i++) {
+          if (String(eqData[i][0]) === String(data.equipmentCode)) {
+            eqSheet.getCell(i + 1, 9).setValue(imageUrl); // Column 9 is ImageURL
+            break;
+          }
+        }
+      }
+
       return ContentService.createTextOutput(JSON.stringify({ 
         success: true, 
-        url: "https://drive.google.com/uc?export=download&id=" + fileId,
+        url: imageUrl,
         fileId: fileId 
       })).setMimeType(ContentService.MimeType.JSON);
     }
@@ -129,8 +145,6 @@ function doPost(e) {
       if (lock) lock.releaseLock();
       return ContentService.createTextOutput(JSON.stringify({success: false, error: "Missing sheet name"})).setMimeType(ContentService.MimeType.JSON);
     }
-  
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   
   // Mapping internal names to actual sheet names in the spreadsheet
   const nameMap = {

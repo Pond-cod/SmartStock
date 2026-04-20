@@ -213,7 +213,7 @@ export default function EquipmentsPage() {
     let finalImageUrl = data.ImageURL || '';
     if (imageFile) {
       try {
-        const uploadRes = await uploadImage(imageFile);
+        const uploadRes = await uploadImage(imageFile, formData.EquipmentCode);
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
         } else if (uploadRes.isTimeout) {

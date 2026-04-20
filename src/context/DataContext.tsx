@@ -34,7 +34,7 @@ type DataContextType = {
   returnAsset: (transactionId: string) => Promise<boolean>;
   approveActionRequest: (requestId: string) => Promise<boolean>;
   rejectActionRequest: (requestId: string) => Promise<boolean>;
-  uploadImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string; isTimeout?: boolean }>;
+  uploadImage: (file: File, equipmentCode?: string) => Promise<{ success: boolean; url?: string; error?: string; isTimeout?: boolean }>;
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -252,7 +252,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
     });
   };
 
-  const uploadImage = useCallback(async (file: File) => {
+  const uploadImage = useCallback(async (file: File, equipmentCode?: string) => {
     return new Promise<{ success: boolean; url?: string; error?: string; isTimeout?: boolean }>(async (resolve) => {
       const startTime = Date.now();
       try {
@@ -265,7 +265,8 @@ function DataProviderContent({ children }: { children: ReactNode }) {
           body: JSON.stringify({
             base64: compressedBase64,
             mimeType: 'image/jpeg',
-            fileName: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+            fileName: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+            equipmentCode: equipmentCode
           })
         });
         
