@@ -56,12 +56,12 @@ export default function ApprovalCenterPage() {
 
   const canAccess = currentUser && hasPermission(currentUser.Role, 'ActionRequests', 'view');
   
-  if (!isLoadingAuth && !canAccess && typeof window !== 'undefined') {
+  if (!isLoadingAuth && !isLoading && !canAccess && typeof window !== 'undefined') {
     router.push('/');
     return null;
   }
 
-  if (isLoadingAuth) {
+  if (isLoadingAuth || isLoading) {
     return <div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
