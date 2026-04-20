@@ -9,6 +9,43 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+function DiffVisualizer({ diffStr }: { diffStr: string }) {
+  if (!diffStr) return <span className="text-sm text-slate-400 italic">No Diff Available</span>;
+  let diff: any;
+  try { diff = JSON.parse(diffStr); } catch (e) { return null; }
+  const before = diff.before || {};
+  const after = diff.after || {};
+  const allKeys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
+  
+  return (
+    <div className="bg-white border border-slate-200 shadow-inner rounded-xl overflow-hidden">
+      <table className="w-full text-left text-[10px]">
+        <thead className="bg-slate-50 text-slate-500 font-black uppercase tracking-widest border-b border-slate-100">
+          <tr>
+            <th className="px-3 py-2 w-1/3">Field</th>
+            <th className="px-3 py-2 w-1/3 text-red-500">Before</th>
+            <th className="px-3 py-2 w-1/3 text-emerald-500">After</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
+          {allKeys.map(key => {
+            const valBefore = before[key];
+            const valAfter = after[key];
+            if (String(valBefore) === String(valAfter)) return null;
+            return (
+              <tr key={key} className="hover:bg-slate-50/50">
+                <td className="px-3 py-2 font-mono font-bold text-slate-600 truncate max-w-[100px]">{key}</td>
+                <td className="px-3 py-2 font-mono text-red-500 truncate max-w-[120px]" title={String(valBefore)}>{valBefore !== undefined && valBefore !== null ? String(valBefore) : '-'}</td>
+                <td className="px-3 py-2 font-mono text-emerald-500 truncate max-w-[120px]" title={String(valAfter)}>{valAfter !== undefined && valAfter !== null ? String(valAfter) : '-'}</td>
+              </tr>
+            );
+          }).filter(Boolean)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function ApprovalCenterPage() {
   const { actionRequests, approveActionRequest, rejectActionRequest, isLoading, refreshData } = useData();
   const { currentUser } = useAuth();
@@ -140,10 +177,16 @@ export default function ApprovalCenterPage() {
                          </div>
                       </div>
 
-                      <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
-                        <pre className="text-[10px] text-slate-500 overflow-auto max-h-32 scrollbar-none font-mono">
-                          {JSON.stringify(payload, null, 2)}
-                        </pre>
+                      <div className="rounded-2xl border border-slate-100 overflow-hidden">
+                        {req.DataDiff ? (
+                          <DiffVisualizer diffStr={req.DataDiff} />
+                        ) : (
+                          <div className="bg-slate-50 p-4">
+                            <pre className="text-[10px] text-slate-500 overflow-auto max-h-32 scrollbar-none font-mono">
+                              {JSON.stringify(payload, null, 2)}
+                            </pre>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

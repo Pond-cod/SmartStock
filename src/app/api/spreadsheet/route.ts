@@ -26,6 +26,27 @@ async function fetchGASWithRetry(url: string, options?: any, retries = 3): Promi
   throw new Error("Max retries reached");
 }
 
+let cachedRolePermissions: any = null;
+let lastCacheUpdate = 0;
+
+async function getRolePermissions() {
+  if (cachedRolePermissions && Date.now() - lastCacheUpdate < 60000) {
+    return cachedRolePermissions;
+  }
+  try {
+    const res = await fetchGASWithRetry(`${GAS_URL}?sheet=RolePermissions&token=${GAS_SECRET_TOKEN}`);
+    const data = await res.json();
+    if (!data.error && Array.isArray(data)) {
+      cachedRolePermissions = data;
+      lastCacheUpdate = Date.now();
+    }
+    return cachedRolePermissions;
+  } catch (e) {
+    console.error("Failed to fetch role permissions", e);
+    return null;
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sheet = searchParams.get('sheet');
@@ -94,26 +115,39 @@ export async function POST(request: Request) {
 
     const SUPER_ADMIN_ONLY_SHEETS = new Set(['RolePermissions', 'super Admin', 'Settings']);
 
-    if (ADMIN_ONLY_WRITE_SHEETS.has(sheet) && callerRole !== 'Admin' && callerRole !== 'super Admin') {
-      return NextResponse.json({ error: 'ไม่ได้รับอนุญาตให้แก้ไขข้อมูลส่วนนี้' }, { status: 403 });
-    }
-
     if (SUPER_ADMIN_ONLY_SHEETS.has(sheet) && callerRole !== 'super Admin') {
-      return NextResponse.json({ error: 'Super Admin เท่านั้นที่สามารถแก้ไขข้อมูลส่วนนี้ได้' }, { status: 403 });
+      return NextResponse.json({ error: 'Super Admin เท่านั้นที่สามารถอัปเดตข้อมูลส่วนนี้ได้' }, { status: 403 });
     }
 
-    // ── MAKER-CHECKER REROUTING ──────────────────────────────────────────────
+    // --- GRANULAR RBAC VALIDATION ---
+    if (callerRole !== 'super Admin' && callerRole !== 'Admin') {
+      const rolePerms = await getRolePermissions();
+      if (rolePerms) {
+        const userPerms = rolePerms.find((p: any) => p.RoleName === callerRole);
+        if (userPerms) {
+           const modulePermsStr = userPerms[sheet] || '';
+           const allowedActions = modulePermsStr.toLowerCase().split(',').map((x: string) => x.trim());
+           let mappedAction = action.toLowerCase();
+           if (mappedAction === 'add') mappedAction = 'create';
+           
+           const isApproving = action === 'EXECUTE_REQUEST' || action === 'REJECT_REQUEST';
+           if (isApproving) mappedAction = 'approve';
+
+           if (!allowedActions.includes(mappedAction) && mappedAction !== 'view' && sheet !== 'Transactions') {
+             return NextResponse.json({ error: `โมดูลนี้ไม่มีสิทธิ์อนุญาตสำหรับบทบาทของคุณ: (${mappedAction} on ${sheet})` }, { status: 403 });
+           }
+        }
+      }
+    }
+
+    // ── RBAC AND MAKER-CHECKER EVALUATION ──────────────────────────────────────────────
     
-    let finalAction = action;
-    let finalSheet = sheet;
-    let finalData = data;
+    let needsApproval = false;
+    let targetApprover = 'admin_approve';
 
     const isDirectAction = action === 'ADD' || action === 'EDIT' || action === 'DELETE';
     
     if (isDirectAction) {
-      let needsApproval = false;
-      let targetApprover = 'admin_approve';
-
       if (callerRole === 'user') {
         needsApproval = true;
         targetApprover = 'admin_approve';
@@ -121,34 +155,31 @@ export async function POST(request: Request) {
         needsApproval = true;
         targetApprover = 'Admin';
       }
+    }
+    
+    // Super Admin God Mode bypasses all approvals
+    // Transactions logic is handled natively
+    if (callerRole === 'super Admin' || sheet === 'Transactions') {
+      needsApproval = false;
+    }
 
-      if (needsApproval && (sheet !== 'Transactions')) { 
-        // Create an Action Request instead of direct execution
-        finalAction = 'ADD';
-        finalSheet = 'ActionRequests';
-        finalData = {
-          RequestID: `REQ-${Date.now()}`,
-          CreatedAt: new Date().toISOString(),
-          RequesterUser: callerUsername,
-          RequesterRole: callerRole,
-          ActionType: action,
-          TargetSheet: sheet,
-          Payload: JSON.stringify(data),
-          Status: 'Pending',
-          TargetApprover: targetApprover,
-          ApproverUser: '',
-          ApprovedAt: ''
-        };
+    if ((sheet === 'Users' || sheet === 'super Admin') && data?.Password) {
+      if (!data.Password.startsWith('$2a$')) {
+        data.Password = await bcrypt.hash(String(data.Password), 10);
       }
     }
 
-    if ((finalSheet === 'Users' || finalSheet === 'super Admin') && finalData?.Password) {
-      if (!finalData.Password.startsWith('$2a$')) {
-        finalData.Password = await bcrypt.hash(String(finalData.Password), 10);
-      }
-    }
+    const payload = { 
+      action: action, 
+      sheet: sheet, 
+      data: data, 
+      token: GAS_SECRET_TOKEN, 
+      caller: callerUsername,
+      callerRole: callerRole,
+      needsApproval: needsApproval,
+      targetApprover: targetApprover
+    };
 
-    const payload = { action: finalAction, sheet: finalSheet, data: finalData, token: GAS_SECRET_TOKEN, caller: callerUsername };
     const res = await fetchGASWithRetry(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -156,12 +187,6 @@ export async function POST(request: Request) {
     });
 
     const result = await res.json();
-    
-    // Supplement result with meta if it was a request
-    if (finalSheet === 'ActionRequests' && result.success) {
-      result.isRequest = true;
-      result.message = 'ส่งคำขอเรียบร้อยแล้ว รอการอนุมัติจาก ' + finalData.TargetApprover;
-    }
 
     return NextResponse.json(result);
   } catch (err: any) {

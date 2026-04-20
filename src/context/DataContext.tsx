@@ -16,6 +16,7 @@ type DataContextType = {
   departments: any[];
   transactions: any[];
   rolePermissions: any[];
+  systemLogs: any[];
   settings: any;
   actionRequests: any[];
   isLoading: boolean;
@@ -117,6 +118,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   const transactions = React.useMemo(() => Array.isArray(allData?.Transactions) ? allData.Transactions : [], [allData]);
   const actionRequests = React.useMemo(() => Array.isArray(allData?.ActionRequests) ? allData.ActionRequests : [], [allData]);
   const rolePermissions = React.useMemo(() => Array.isArray(allData?.RolePermissions) ? allData.RolePermissions : [], [allData]);
+  const systemLogs = React.useMemo(() => Array.isArray(allData?.SystemLogs) ? allData.SystemLogs : [], [allData]);
   const settings = React.useMemo(() => {
     return Array.isArray(allData?.Settings) && allData.Settings.length > 0 
       ? { ...DEFAULT_SETTINGS, ...allData.Settings[0] } 
@@ -213,7 +215,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      categories, equipments, users, superAdmins, personnel, departments, transactions, rolePermissions, settings,
+      categories, equipments, users, superAdmins, personnel, departments, transactions, rolePermissions, systemLogs, settings,
       isLoading: isLoading && !allData, // Show loading only if we have no offline placeholder
       error: queryError ? queryError.message : null,
       connStatus: queryError ? 'error' : connStatus,

@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Users, QrCode, Factory, X, Settings, History, Send, Building2, BarChart3, Shield, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -114,6 +114,17 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: { isMobileOpen:
             >
               <Settings className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
               <span className="text-sm font-semibold md:hidden lg:block truncate">ตั้งค่าระบบ</span>
+            </Link>
+            <Link
+              href="/settings/audit-logs"
+              onClick={() => setMobileOpen(false)}
+              className={clsx(
+                'sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+                pathname === '/settings/audit-logs' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <ShieldAlert className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
+              <span className="text-sm font-semibold md:hidden lg:block truncate">Audit Logs</span>
             </Link>
           </>
         )}

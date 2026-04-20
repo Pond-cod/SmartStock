@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { Settings, Palette, Sun, Moon, AlertCircle, Save , RefreshCw} from 'lucide-react';
+import { Settings, Palette, Sun, Moon, AlertCircle, Save, RefreshCw, ShieldCheck, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const THEME_COLORS = [
@@ -25,6 +25,8 @@ export default function SettingsPage() {
   const [themeColor, setThemeColor] = useState('#3b82f6');
   const [textColor, setTextColor] = useState('dark');
   const [fontSize, setFontSize] = useState('medium');
+  const [requisitionEnabled, setRequisitionEnabled] = useState(true);
+  const [makerCheckerStrict, setMakerCheckerStrict] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -38,6 +40,8 @@ export default function SettingsPage() {
       setThemeColor(settings.ThemeColor || '#3b82f6');
       setTextColor(settings.TextColor || 'dark');
       setFontSize(settings.FontSize || 'medium');
+      setRequisitionEnabled(settings.RequisitionEnabled !== 'false' && settings.RequisitionEnabled !== false);
+      setMakerCheckerStrict(settings.MakerCheckerStrict !== 'false' && settings.MakerCheckerStrict !== false);
     }
   }, [settings]);
 
@@ -46,7 +50,10 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     setMessage({ text: '', type: '' });
-    const payload = { ID: 1, ThemeColor: themeColor, TextColor: textColor, FontSize: fontSize };
+    const payload = { 
+       ID: 1, ThemeColor: themeColor, TextColor: textColor, FontSize: fontSize,
+       RequisitionEnabled: requisitionEnabled, MakerCheckerStrict: makerCheckerStrict 
+    };
     let res = (settings && settings.ID) ? await updateRecord("Settings", { ...payload, ID: settings.ID }) : await createRecord("Settings", payload);
 
     if (res.success) {
@@ -122,8 +129,37 @@ export default function SettingsPage() {
                ))}
              </div>
           </div>
-        </div>
 
+          {currentUser.Role === 'super Admin' && (
+             <div className="pt-6 border-t border-slate-100 mt-2">
+                <h2 className="text-sm font-black text-indigo-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" /> System Governance (Super Admin)
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div>
+                      <p className="font-bold text-slate-700 text-sm">การเบิกพัสดุ (Requisition)</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">เปิดหรือปิดการใช้งานระบบเบิก</p>
+                    </div>
+                    <button onClick={() => setRequisitionEnabled(!requisitionEnabled)} className={`p-1 rounded-full transition-colors ${requisitionEnabled ? 'text-emerald-500' : 'text-slate-300'}`}>
+                      {requisitionEnabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div>
+                      <p className="font-bold text-slate-700 text-sm">Maker-Checker Strict Mode</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">บังคับใช้คิวอนุมัติการเปลี่ยนแปลงข้อมูล</p>
+                    </div>
+                    <button onClick={() => setMakerCheckerStrict(!makerCheckerStrict)} className={`p-1 rounded-full transition-colors ${makerCheckerStrict ? 'text-indigo-500' : 'text-slate-300'}`}>
+                      {makerCheckerStrict ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
+                    </button>
+                  </div>
+                </div>
+             </div>
+          )}
+
+        </div>
         <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
           <button onClick={handleSave} disabled={isSaving} className="btn-primary px-8 rounded-2xl shadow-lg">
             {isSaving ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
