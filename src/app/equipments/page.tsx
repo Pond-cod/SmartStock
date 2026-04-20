@@ -217,9 +217,7 @@ export default function EquipmentsPage() {
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
         } else {
-          // TOTAL OPTIMISTIC POLICY: Since we confirm images are saved in Drive 
-          // but the connection is lost at the proxy level (Vercel), we allow the 
-          // record save to proceed. The background GAS script already handles the linking.
+          // TOTAL OPTIMISTIC POLICY
           const errorMsg = (uploadRes.error || '').toLowerCase();
           if (errorMsg.includes('large') || errorMsg.includes('413')) {
             toast.error("ไฟล์รูปภาพใหญ่เกินไป (Payload Too Large) กรุณาลดขนาดภาพก่อนอัปโหลด");
@@ -227,8 +225,19 @@ export default function EquipmentsPage() {
             return;
           }
           
-          toast.info("📷 ระบบกำลังเชื่อมโยงรูปภาพในพื้นหลัง (Background Sync)... ข้อมูลพัสดุจะถูกบันทึกให้ทันที");
-          // Proceed with saving - DO NOT RETURN
+          const now = new Date();
+          now.setSeconds(now.getSeconds() + 25); // Estimated background sync time
+          const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          toast.info(`📷 ระบบกำลังแอบผูกลิ้งค์ภาพให้เบื้องหลัง... จะเสร็จสมบูรณ์ประมาณ ${timeStr}`, {
+            duration: 8000
+          });
+
+          // Secondary notification when sync is likely done
+          setTimeout(() => {
+            toast.success(`✅ การซิงค์ภาพพัสดุ ${data.EquipmentCode} ในพื้นหลังน่าจะเสร็จสิ้นแล้ว! (กรุณา Refresh หน้าจอเพื่อดูรูปภาพ)`);
+            refreshData(); // Attempt to refresh local context
+          }, 25000);
         }
       } catch (err) {
         toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเพื่ออัปโหลดพัสดุ');

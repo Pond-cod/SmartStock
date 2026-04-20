@@ -121,14 +121,27 @@ function doPost(e) {
 
       // AUTOMATIC LINKING: If equipmentCode is provided, update the sheet immediately
       if (data.equipmentCode) {
+        var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         var eqSheet = ss.getSheetByName('Equipments');
-        var eqData = eqSheet.getDataRange().getValues();
-        for (var i = 1; i < eqData.length; i++) {
-          if (String(eqData[i][0]) === String(data.equipmentCode)) {
-            eqSheet.getCell(i + 1, 9).setValue(imageUrl); // Column 9 is ImageURL
-            break;
+        
+        // RETRY MECHANISM: Wait for the record to be created by the main process
+        var linked = false;
+        for (var retry = 0; retry < 5; retry++) {
+          if (retry > 0) Utilities.sleep(2000); // Wait 2s between retries
+          
+          var eqData = eqSheet.getDataRange().getValues();
+          for (var i = 1; i < eqData.length; i++) {
+            if (String(eqData[i][0]) === String(data.equipmentCode)) {
+              eqSheet.getRange(i + 1, 9).setValue(imageUrl); // Column 9 is ImageURL
+              linked = true;
+              break;
+            }
           }
+          if (linked) break;
         }
+        
+        // Log the result for debugging in GAS
+        console.log("Background Linking for " + data.equipmentCode + (linked ? " SUCCESS" : " FAILED (Record not found after 5 retries)"));
       }
 
       return ContentService.createTextOutput(JSON.stringify({ 
