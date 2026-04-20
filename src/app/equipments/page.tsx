@@ -33,7 +33,7 @@ const inputCls = (hasError: boolean) =>
       : 'border-slate-200 dark:border-slate-700 focus:ring-primary/20 focus:border-primary'
   }`;
 
-const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue, handleDelete }: any) => {
+const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue, openDetails, handleDelete }: any) => {
   const isOut = eq.Status === 'Issued' || Number(eq.Quantity) <= 0;
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
@@ -342,7 +342,7 @@ export default function EquipmentsPage() {
                   <EquipmentRow
                     key={eq.EquipmentCode || i}
                     eq={eq} i={i} canEdit={canEdit}
-                    openQR={openQR} openModal={openModal} openIssue={openIssue} handleDelete={handleDelete}
+                    openQR={openQR} openModal={openModal} openIssue={openIssue} openDetails={openDetails} handleDelete={handleDelete}
                   />
                 ))
               )}
