@@ -118,7 +118,7 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
 EquipmentRow.displayName = 'EquipmentRow';
 
 export default function EquipmentsPage() {
-  const { equipments, categories, isLoading, createRecord, updateRecord, deleteRecord, uploadImage } = useData();
+  const { equipments, categories, isLoading, createRecord, updateRecord, deleteRecord, uploadImage, refreshData } = useData();
   const { currentUser } = useAuth();
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
