@@ -217,7 +217,14 @@ export default function EquipmentsPage() {
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
         } else {
-          toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
+          const isTimeout = uploadRes.error?.includes('Timeout');
+          if (isTimeout) {
+            toast.warning(`บันทึกภาพสำเร็จล่าช้า: ${uploadRes.error}`);
+            // If it's a timeout, we don't have the URL, but the user can try to save without it 
+            // OR we can tell them to wait. For now, let's stop and let them read the toast.
+          } else {
+            toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
+          }
           setIsSubmitting(false);
           return;
         }

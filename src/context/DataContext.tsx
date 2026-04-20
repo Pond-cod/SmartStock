@@ -269,12 +269,16 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         });
         
         if (!res.ok) {
+          if (res.status === 504) {
+            // Vercel timeout (10s) hit, but GAS might still finish.
+            // We tell the user it's processing.
+            throw new Error("Server Timeout (Vercel 10s): ระบบกำลังประมวลผลวในพื้นหลัง กรุณารอสักครู่แล้วลองกดบันทึกใหม่");
+          }
           let errorText = `HTTP ${res.status}`;
           try {
             const errData = await res.json();
             errorText = errData.error || errorText;
           } catch (e) {
-            // Handle cases where response isn't JSON (like 413 Payload Too Large)
             if (res.status === 413) errorText = "ไฟล์รูปภาพใหญ่เกินไป (Payload Too Large)";
           }
           throw new Error(errorText);
@@ -284,7 +288,13 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         resolve({ success: true, url: result.url });
       } catch (err: any) {
         console.error("Upload Error:", err);
-        resolve({ success: false, error: err.message || "Network error" });
+        // Better error categorization
+        let msg = err.message || "Network error";
+        if (msg.includes("Server Timeout")) {
+           // We resolve as success: true but with a warning or special handling 
+           // if we want to be bold, but for now let's just show the error.
+        }
+        resolve({ success: false, error: msg });
       }
     });
   }, []);
