@@ -34,7 +34,7 @@ type DataContextType = {
   returnAsset: (transactionId: string) => Promise<boolean>;
   approveActionRequest: (requestId: string) => Promise<boolean>;
   rejectActionRequest: (requestId: string) => Promise<boolean>;
-  uploadImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
+  uploadImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string; isTimeout?: boolean }>;
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
