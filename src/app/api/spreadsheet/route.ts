@@ -148,18 +148,33 @@ export async function POST(request: Request) {
     const isDirectAction = action === 'ADD' || action === 'EDIT' || action === 'DELETE';
     
     if (isDirectAction) {
-      if (callerRole === 'user') {
-        needsApproval = true;
-        targetApprover = 'admin_approve';
-      } else if (callerRole === 'admin_approve' && action === 'DELETE') {
-        needsApproval = true;
-        targetApprover = 'Admin';
+      if (callerRole === 'super Admin' || callerRole === 'Admin') {
+        needsApproval = false;
+      } else {
+        const rolePerms = await getRolePermissions();
+        const userPerms = rolePerms?.find((p: any) => p.RoleName === callerRole);
+        
+        if (userPerms && userPerms.ApproverLine && userPerms.ApproverLine.trim() !== '') {
+          needsApproval = true;
+          targetApprover = userPerms.ApproverLine;
+        } else {
+          // If ApproverLine is empty or missing, fallback to explicit legacy hardcodes
+          // to ensure system remains secure by default
+          if (callerRole === 'user') {
+            needsApproval = true;
+            targetApprover = 'admin_approve';
+          } else if (callerRole === 'admin_approve' && action === 'DELETE') {
+            needsApproval = true;
+            targetApprover = 'Admin';
+          } else {
+            needsApproval = false;
+          }
+        }
       }
     }
     
-    // Super Admin God Mode bypasses all approvals
     // Transactions logic is handled natively
-    if (callerRole === 'super Admin' || sheet === 'Transactions') {
+    if (sheet === 'Transactions') {
       needsApproval = false;
     }
 

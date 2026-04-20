@@ -135,10 +135,7 @@ export default function TransactionsPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         {isPending && isAdmin && (
-                          <>
-                            <button onClick={() => handleApprove(tx.TransactionID)} disabled={!!isProcessing} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all disabled:opacity-50">อนุมัติ</button>
-                            <button onClick={() => handleReject(tx.TransactionID)} disabled={!!isProcessing} className="bg-red-50 hover:bg-red-100 text-red-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all disabled:opacity-50">ปฏิเสธ</button>
-                          </>
+                          <span className="text-[10px] text-amber-500/70 italic mr-2 border border-amber-500/20 px-2 py-1 rounded-md">รอการอนุมัติในศูนย์การอนุมัติ</span>
                         )}
                         {isActive && isAdmin && (
                           <button onClick={() => handleReturn(tx.TransactionID)} disabled={!!isProcessing} className="bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all">

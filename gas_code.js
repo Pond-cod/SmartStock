@@ -496,3 +496,64 @@ function doPost(e) {
 function doOptions(e) {
   return ContentService.createTextOutput("").setMimeType(ContentService.MimeType.TEXT);
 }
+
+function setupPermissions() {
+  // Dummy call to force Google Apps Script to request DriveApp scopes during authorization
+  try { DriveApp.getFiles().hasNext(); } catch (e) {}
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  
+  // ensure RolePermissions sheet exists
+  let rpSheet = ss.getSheetByName('RolePermissions');
+  if (!rpSheet) {
+    rpSheet = ss.insertSheet('RolePermissions');
+  }
+
+  const defaultHeaders = [
+    'RoleName', 'Dashboard', 'Categories', 'Equipments', 'Requisitions',
+    'Transactions', 'Reports', 'MasterData', 'Users', 'ActionRequests', 'ApproverLine'
+  ];
+  
+  if (rpSheet.getLastRow() === 0) {
+    rpSheet.appendRow(defaultHeaders);
+  }
+
+  const data = rpSheet.getDataRange().getValues();
+  const existingRoles = data.length > 1 ? data.slice(1).map(r => r[0]) : [];
+
+  // Insert default 'user' role
+  if (!existingRoles.includes('user')) {
+    rpSheet.appendRow([
+      'user',
+      'view',          // Dashboard
+      'view',          // Categories
+      'view',          // Equipments
+      'view,create',   // Requisitions
+      'view',          // Transactions
+      'view',          // Reports
+      '',              // MasterData
+      '',              // Users
+      '',              // ActionRequests
+      'admin_approve'  // ApproverLine
+    ]);
+  }
+
+  // Insert default 'admin_approve' role
+  if (!existingRoles.includes('admin_approve')) {
+    rpSheet.appendRow([
+      'admin_approve',
+      'view',          // Dashboard
+      'view,create,edit,delete', // Categories
+      'view,create,edit,delete', // Equipments
+      'view,create',   // Requisitions
+      'view,approve',  // Transactions
+      'view',          // Reports
+      '',              // MasterData
+      '',              // Users
+      'view,approve',  // ActionRequests
+      'Admin'          // ApproverLine
+    ]);
+  }
+  
+  return "Setup Permissions completed.";
+}

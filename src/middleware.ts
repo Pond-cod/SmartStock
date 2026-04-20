@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
     const role = payload.role as string;
 
     // Page-level RBAC (API-level RBAC is enforced separately in route handlers)
-    if (pathname.startsWith('/users') || pathname.startsWith('/settings')) {
+    if (pathname.startsWith('/users') || (pathname.startsWith('/settings') && !pathname.startsWith('/settings/approvals'))) {
       const isAdmin = role === 'Admin' || role === 'super Admin';
       if (!isAdmin) {
         return NextResponse.redirect(new URL('/', request.url));

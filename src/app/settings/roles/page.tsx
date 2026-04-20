@@ -67,6 +67,13 @@ export default function RolesPermissionsPage() {
     }));
   };
 
+  const handleApproverChange = (roleName: string, approverName: string) => {
+    setLocalPermissions(prev => prev.map(role => {
+      if (role.RoleName !== roleName) return role;
+      return { ...role, ApproverLine: approverName };
+    }));
+  };
+
   const handleGrantAllLocal = (roleName: string, moduleId: string) => {
     if (!confirm(`คุณต้องการเปิดสิทธิ์ "ทั้งหมด" สำหรับ module นี้ใช่หรือไม่?`)) return;
 
@@ -102,7 +109,7 @@ export default function RolesPermissionsPage() {
       return;
     }
 
-    const newRole: any = { RoleName: name };
+    const newRole: any = { RoleName: name, ApproverLine: 'Admin' };
     MODULES.forEach(m => newRole[m.id] = 'view'); // Default permission
     const res = await createRecord('RolePermissions', newRole);
     if (res.success) toast.success(`สร้างสิทธิ์สำหรับ Role "${name}" สำเร็จ`);
@@ -193,8 +200,28 @@ export default function RolesPermissionsPage() {
                         {role.RoleName[0].toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="text-xl font-black text-slate-800">{role.RoleName}</h3>
-                        {hasChanges && <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-100 px-2 py-0.5 rounded-full">มีการแก้ไข</span>}
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-black text-slate-800">{role.RoleName}</h3>
+                          {hasChanges && <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-100 px-2 py-0.5 rounded-full">มีการแก้ไข</span>}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-500">สายผู้อนุมัติ:</span>
+                          <select 
+                            value={role.ApproverLine || ''} 
+                            onChange={(e) => handleApproverChange(role.RoleName, e.target.value)}
+                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">-- ไม่มี (ดำเนินการทันที) --</option>
+                            <option value="Admin">Admin</option>
+                            <option value="super Admin">super Admin</option>
+                            {existingPermRoles
+                              .filter((r: string) => r !== role.RoleName && r !== 'Admin' && r !== 'super Admin')
+                              .map((r: string) => (
+                                <option key={r} value={r}>{r}</option>
+                              ))
+                            }
+                          </select>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

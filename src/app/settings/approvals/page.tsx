@@ -47,7 +47,7 @@ function DiffVisualizer({ diffStr }: { diffStr: string }) {
 }
 
 export default function ApprovalCenterPage() {
-  const { actionRequests, approveActionRequest, rejectActionRequest, isLoading, refreshData, hasPermission } = useData();
+  const { actionRequests, approveActionRequest, rejectActionRequest, transactions, approveTransaction, rejectTransaction, isLoading, refreshData, hasPermission } = useData();
   const { currentUser, isLoadingAuth } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -93,6 +93,30 @@ export default function ApprovalCenterPage() {
     setIsProcessing(null);
   };
 
+  const handleApproveTx = async (txId: string) => {
+    setIsProcessing(txId);
+    const success = await approveTransaction(txId);
+    if (success) {
+      toast.success('อนุมัติการเบิกพัสดุสำเร็จ');
+      await refreshData();
+    } else {
+      toast.error('เกิดข้อผิดพลาด');
+    }
+    setIsProcessing(null);
+  };
+
+  const handleRejectTx = async (txId: string) => {
+    setIsProcessing(txId);
+    const success = await rejectTransaction(txId);
+    if (success) {
+      toast.success('ปฏิเสธการเบิกพัสดุแล้ว');
+      await refreshData();
+    } else {
+      toast.error('เกิดข้อผิดพลาด');
+    }
+    setIsProcessing(null);
+  };
+
   const getActionLabel = (type: string) => {
     switch (type) {
       case 'ADD': return { label: 'เพิ่มข้อมูล', cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
@@ -101,6 +125,12 @@ export default function ApprovalCenterPage() {
       default: return { label: type, cls: 'bg-slate-50 text-slate-600' };
     }
   };
+
+  const pendingTransactions = activeTab === 'Pending' 
+    ? transactions
+        .filter((tx: any) => tx.Status === 'Pending-Approve' && tx.Type === 'ISSUE')
+        .sort((a: any, b: any) => new Date(b.TransactionDate).getTime() - new Date(a.TransactionDate).getTime())
+    : [];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -119,9 +149,9 @@ export default function ApprovalCenterPage() {
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'Pending' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <Clock className="w-3 h-3" /> รออนุมัติ
-            {actionRequests.filter(r => r.Status === 'Pending').length > 0 && (
+            {(actionRequests.filter(r => r.Status === 'Pending').length + pendingTransactions.length) > 0 && (
               <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
-                {actionRequests.filter(r => r.Status === 'Pending').length}
+                {actionRequests.filter(r => r.Status === 'Pending').length + pendingTransactions.length}
               </span>
             )}
           </button>
@@ -146,7 +176,7 @@ export default function ApprovalCenterPage() {
             <RefreshCw className="w-10 h-10 animate-spin" />
             <p className="font-bold">กำลังโหลดคำขอ...</p>
           </div>
-        ) : filteredRequests.length === 0 ? (
+        ) : filteredRequests.length === 0 && pendingTransactions.length === 0 ? (
           <div className="bg-white rounded-[2rem] border border-slate-100 p-20 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
               <FileText className="w-8 h-8" />
@@ -154,7 +184,79 @@ export default function ApprovalCenterPage() {
             <h3 className="text-lg font-bold text-slate-400">ไม่พบรายการ{activeTab === 'Pending' ? 'ที่รออนุมัติ' : activeTab === 'Approved' ? 'ที่อนุมัติแล้ว' : 'ที่ปฏิเสธ'}</h3>
           </div>
         ) : (
-          filteredRequests.map((req) => {
+          <>
+            {pendingTransactions.map((tx: any) => (
+              <div key={tx.TransactionID} className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                <div className="flex flex-col md:flex-row">
+                  <div className="p-6 md:w-2/3 border-r border-slate-50">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border bg-amber-50 text-amber-600 border-amber-100">
+                        ขอเบิกพัสดุ
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400">ID: {tx.TransactionID}</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-4">
+                         <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:bg-amber-100 transition-colors border border-amber-100">
+                           <Layers className="w-5 h-5" />
+                         </div>
+                         <div>
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">พัสดุ: {tx.EquipmentCode}</p>
+                           <h3 className="font-bold text-slate-800 text-lg">{tx.Name}</h3>
+                           <p className="text-sm font-bold text-slate-600 mt-1">จำนวนที่ขอเบิก: <span className="text-amber-500 font-black">{tx.Quantity} {tx.Unit}</span></p>
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50/30 p-6 md:w-1/3 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 border border-slate-100">
+                          <User className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ผู้ขอเบิก</p>
+                          <p className="text-sm font-bold text-slate-700">{tx.RequestUser}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 border border-slate-100">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">วันที่ทำรายการ</p>
+                          <p className="text-sm font-bold text-slate-700">{new Date(tx.TransactionDate).toLocaleString('th-TH')}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-6">
+                      <button 
+                        onClick={() => handleRejectTx(tx.TransactionID)}
+                        disabled={isProcessing === tx.TransactionID}
+                        className="flex-1 py-3 bg-white border border-red-100 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                      >
+                        {isProcessing === tx.TransactionID ? <RefreshCw className="w-3 h-3 animate-spin"/> : <X className="w-3 h-3" />}
+                        ปฏิเสธ
+                      </button>
+                      <button 
+                        onClick={() => handleApproveTx(tx.TransactionID)}
+                        disabled={isProcessing === tx.TransactionID}
+                        className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-xs shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                      >
+                        {isProcessing === tx.TransactionID ? <RefreshCw className="w-3 h-3 animate-spin"/> : <Check className="w-3 h-3" />}
+                        อนุมัติ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+          {filteredRequests.map((req) => {
             const act = getActionLabel(req.ActionType);
             const payload = JSON.parse(req.Payload);
             const itemName = payload.Name || payload.CategoryName || payload.PersonnelID || payload.DepartmentName || payload.Username || 'ข้อมูลทั่วไป';
@@ -248,7 +350,8 @@ export default function ApprovalCenterPage() {
                 </div>
               </div>
             );
-          })
+          })}
+          </>
         )}
       </div>
 
