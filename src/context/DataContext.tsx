@@ -253,7 +253,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
   };
 
   const uploadImage = useCallback(async (file: File) => {
-    return new Promise<{ success: boolean; url?: string; error?: string }>(async (resolve) => {
+    return new Promise<{ success: boolean; url?: string; error?: string; isTimeout?: boolean }>(async (resolve) => {
       const startTime = Date.now();
       try {
         // Compress image first to avoid Vercel/GAS body size limits
