@@ -290,13 +290,14 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         console.error("Upload Error Details:", err, "Duration:", duration);
         
         let msg = err.message || "Network error";
-        // If it's a generic fetch error or 504/timeout, and it took > 8 seconds, it's likely a Vercel timeout
-        if (duration > 8000 && (msg === "Failed to fetch" || msg.includes("Network error") || msg.includes("Timeout"))) {
+        // CRITICAL FIX: Broaden the detection for Vercel timeouts. 
+        // If it takes > 5s and fails, it's very likely a slow Google upload that hit a proxy wall.
+        if (duration > 5000 && !msg.includes("Payload Too Large")) {
           // Special return object for optimistic handling
           resolve({ 
             success: false, 
             isTimeout: true,
-            error: "ระบบกำลังประมวลผลรูปภาพในพื้นหลัง (Vercel Timeout): ภาพของคุณน่าจะถูกบันทึกสำเร็จแล้ว กรุณาระบุรหัสพัสดุเดิมแล้วกดบันทึกใหม่อีกครั้งเพื่อยืนยัน"
+            error: "ระบบใช้เวลาประมวลผลนานกว่าปกติ (Vercel Timeout): ภาพคูณน่าจะถูกบันทึกสำเร็จลง Drive แล้วเพื่อความต่อเนื่องกรุณาระบุรหัสพัสดุเดิมแล้วกดบันทึกใหม่อีกครั้งเพื่อยืนยัน"
           });
           return;
         }
