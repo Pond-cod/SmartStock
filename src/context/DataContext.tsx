@@ -254,6 +254,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
 
   const uploadImage = useCallback(async (file: File) => {
     return new Promise<{ success: boolean; url?: string; error?: string }>(async (resolve) => {
+      const startTime = Date.now();
       try {
         // Compress image first to avoid Vercel/GAS body size limits
         const compressedBase64 = await compressImage(file);
@@ -270,9 +271,7 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         
         if (!res.ok) {
           if (res.status === 504) {
-            // Vercel timeout (10s) hit, but GAS might still finish.
-            // We tell the user it's processing.
-            throw new Error("Server Timeout (Vercel 10s): ระบบกำลังประมวลผลวในพื้นหลัง กรุณารอสักครู่แล้วลองกดบันทึกใหม่");
+            throw new Error("Server Timeout (Vercel 10s): ระบบกำลังประมวลผลในพื้นหลัง กรุณารอสักครู่แล้วลองกดบันทึกใหม่");
           }
           let errorText = `HTTP ${res.status}`;
           try {
@@ -287,13 +286,15 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         const result = await res.json();
         resolve({ success: true, url: result.url });
       } catch (err: any) {
-        console.error("Upload Error:", err);
-        // Better error categorization
+        const duration = Date.now() - startTime;
+        console.error("Upload Error:", err, "Duration:", duration);
+        
         let msg = err.message || "Network error";
-        if (msg.includes("Server Timeout")) {
-           // We resolve as success: true but with a warning or special handling 
-           // if we want to be bold, but for now let's just show the error.
+        // If it's a generic fetch error or 504, and it took > 8 seconds, it's likely a Vercel timeout
+        if (duration > 8000 && (msg === "Failed to fetch" || msg.includes("Network error") || msg.includes("Timeout"))) {
+          msg = "ระบบกำลังประมวลผลในพื้นหลัง (Vercel Timeout): ภาพของคุณน่าจะถูกบันทึกสำเร็จแล้ว กรุณาระบุรหัสพัสดุเดิมแล้วกดบันทึกใหม่อีกครั้งเพื่อยืนยัน";
         }
+        
         resolve({ success: false, error: msg });
       }
     });

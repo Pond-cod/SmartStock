@@ -114,17 +114,9 @@ function doPost(e) {
     
     if (action === 'UPLOAD_IMAGE') {
       var folderId = '1IAYHdmp5GAu9ov-gX6yO1mTWLxsuyk97';
-      var folder;
-      try {
-        folder = DriveApp.getFolderById(folderId);
-      } catch (e) {
-        folder = DriveApp.getRootFolder();
-      }
-      
-      var base64Data = data.base64.split(',')[1] || data.base64;
-      var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), data.mimeType || 'image/png', data.fileName || ('IMG_' + Date.now() + '.png'));
+      var folder = DriveApp.getFolderById(folderId);
+      var blob = Utilities.newBlob(Utilities.base64Decode(data.base64.split(',')[1] || data.base64), 'image/jpeg', data.fileName || 'IMG.jpg');
       var file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       var fileId = file.getId();
       return ContentService.createTextOutput(JSON.stringify({ 
         success: true, 

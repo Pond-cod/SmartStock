@@ -77,12 +77,21 @@ export default function QRScanPage() {
     }
   }, [lookupCode]);
 
-  const stopCamera = React.useCallback(() => {
+  const stopCamera = React.useCallback(async () => {
     if (html5QrCodeRef.current) {
-      html5QrCodeRef.current.stop().catch(() => {});
-      html5QrCodeRef.current = null;
+      try {
+        if (html5QrCodeRef.current.isScanning) {
+          await html5QrCodeRef.current.stop();
+        }
+      } catch (err) {
+        console.warn("Scanner stop issue:", err);
+      } finally {
+        html5QrCodeRef.current = null;
+        setIsCameraActive(false);
+      }
+    } else {
+      setIsCameraActive(false);
     }
-    setIsCameraActive(false);
     if (scanState === 'scanning') setScanState('idle');
   }, [scanState]);
 
@@ -95,8 +104,16 @@ export default function QRScanPage() {
   };
 
   useEffect(() => {
-    return () => { stopCamera(); };
-  }, [stopCamera]);
+    return () => {
+      if (html5QrCodeRef.current) {
+        const qrCode = html5QrCodeRef.current;
+        html5QrCodeRef.current = null;
+        if (qrCode.isScanning) {
+          qrCode.stop().catch(console.warn);
+        }
+      }
+    };
+  }, []);
 
   const eq = foundEquipment;
   const statusCfg = eq ? (STATUS_CFG[eq.Status] ?? { label: eq.Status, cls: 'bg-slate-100', icon: null }) : null;
