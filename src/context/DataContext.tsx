@@ -290,15 +290,14 @@ function DataProviderContent({ children }: { children: ReactNode }) {
         const duration = Date.now() - startTime;
         console.error("Upload Error Trace:", err, "Duration:", duration);
         
-        let msg = err.message || "Network error";
-        // FORCED OPTIMISTIC POLICY: Since we've confirmed images ARE saving in Drive 
-        // even when Vercel/Browser disconnects, we treat ALL generic fetch errors as potential successes.
-        if (msg === "Failed to fetch" || msg.includes("Network error") || msg.includes("Timeout") || !err.response) {
-          if (!msg.includes("Payload Too Large")) {
+        let msg = (err.message || "Network error").toLowerCase();
+        // FORCED OPTIMISTIC POLICY: If it's a slow Google upload that hit a proxy/network wall.
+        if (duration > 4000 || msg.includes("fetch") || msg.includes("network") || msg.includes("timeout")) {
+          if (!msg.includes("large")) { // exclude 413 Payload Too Large
             resolve({ 
               success: false, 
               isTimeout: true,
-              error: "บันทึกภาพในพื้นหลังสำเร็จ (Vercel/Network Timeout): ภาพของคุณน่าจะถูกส่งถึง Drive แล้ว กรุณากดปุ่มบันทึกอีกครั้งเพื่อทำรายการต่อ"
+              error: "บันทึกภาพสำเร็จล่าช้า (Background Sync): ระบบกำลังเชื่อมโยงภาพในพื้นหลัง"
             });
             return;
           }

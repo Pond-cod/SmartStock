@@ -217,11 +217,10 @@ export default function EquipmentsPage() {
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
         } else if (uploadRes.isTimeout) {
-          // Optimistic Success: Show orange toast and allow the user to save record 
-          // but inform them that the image URL might be missing initially.
-          toast.warning("📷 บันทึกภาพในพื้นหลังสำเร็จแล้ว! คุณสามารถกดปุ่มบันทึกอีกครั้งเพื่อเสร็จสิ้นขั้นตอน (ภาพจะแสดงผลในระบบภายใน 10-20 วินาที)");
-          setIsSubmitting(false); // Allow them to click "Save" again
-          return;
+          // Optimistic Success: Show info toast and PROCEED with saving the record.
+          // THE BACKGROUND GAS PROCESS WILL HANDLE THE IMAGE LINKING.
+          toast.info("📷 ระบบกำลังเชื่อมโยงรูปภาพในพื้นหลัง ข้อมูลพัสดุจะถูกบันทึกให้ทันที...");
+          // Do not return; let it proceed to updateRecord/createRecord
         } else {
           toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
           setIsSubmitting(false);
