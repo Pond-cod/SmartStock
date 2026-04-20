@@ -229,9 +229,7 @@ export default function EquipmentsPage() {
           now.setSeconds(now.getSeconds() + 25); // Estimated background sync time
           const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-          toast.info(`📷 ระบบกำลังแอบผูกลิ้งค์ภาพให้เบื้องหลัง... จะเสร็จสมบูรณ์ประมาณ ${timeStr}`, {
-            duration: 8000
-          });
+          toast.info(`📷 ระบบกำลังแอบผูกลิ้งค์ภาพให้เบื้องหลัง... จะเสร็จสมบูรณ์ประมาณ ${timeStr}`);
 
           // Secondary notification when sync is likely done
           setTimeout(() => {
