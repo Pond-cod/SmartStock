@@ -498,8 +498,12 @@ function doOptions(e) {
 }
 
 function setupPermissions() {
-  // Dummy call to force Google Apps Script to request DriveApp scopes during authorization
-  try { DriveApp.getFiles().hasNext(); } catch (e) {}
+  // Dummy call to force Google Apps Script to request DriveApp full scopes during authorization
+  try { 
+    DriveApp.getFiles(); 
+    DriveApp.getFoldersByName('x');
+    DriveApp.createFolder('x');
+  } catch (e) {}
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   
