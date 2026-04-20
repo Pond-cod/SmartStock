@@ -72,6 +72,14 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
       </td>
       <td className="px-3 py-4 text-center">
         <div className="flex justify-center gap-1.5">
+          <Tooltip text="ดูรายละเอียดพัสดุ">
+            <button
+              onClick={() => openDetails(eq)}
+              className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </Tooltip>
           <Tooltip text="ทำรายการเบิกพัสดุ">
             <button
               onClick={() => openIssue(eq)}
@@ -126,6 +134,8 @@ export default function EquipmentsPage() {
   const [qrBatchMode, setQrBatchMode] = useState(false);
   const [issueEquipment, setIssueEquipment] = useState<any>(null);
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [detailsEq, setDetailsEq] = useState<any>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EquipmentForm>();
   const canEdit = currentUser && ['Admin', 'admin_approve', 'super Admin'].includes(currentUser.Role);
@@ -163,6 +173,9 @@ export default function EquipmentsPage() {
 
   const openIssue = (eq: any) => { setIssueEquipment(eq); setShowIssueModal(true); };
   const closeIssue = () => { setIssueEquipment(null); setShowIssueModal(false); };
+  
+  const openDetails = (eq: any) => { setDetailsEq(eq); setIsDetailsModalOpen(true); };
+  const closeDetails = () => { setDetailsEq(null); setIsDetailsModalOpen(false); };
 
   const openModal = (eq: any = null) => {
     if (!canEdit) return;
@@ -187,14 +200,31 @@ export default function EquipmentsPage() {
     setIsSubmitting(true);
     setErrorMsg('');
     
+    // Check for duplicate EquipmentCode (only for NEW records)
+    if (!editingEq) {
+      const isDuplicate = equipments.some((eq: any) => eq.EquipmentCode === data.EquipmentCode);
+      if (isDuplicate) {
+        setErrorMsg(`รหัสพัสดุ "${data.EquipmentCode}" ถูกใช้ไปแล้วในระบบ กรุณาใช้รหัสอื่น`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    
     let finalImageUrl = data.ImageURL || '';
     if (imageFile) {
-      const uploadRes = await uploadImage(imageFile);
-      if (uploadRes.success && uploadRes.url) {
-        finalImageUrl = uploadRes.url;
-      } else {
-        toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error}`);
-        // Optional: proceed without image, or stop. Let's proceed.
+      try {
+        const uploadRes = await uploadImage(imageFile);
+        if (uploadRes.success && uploadRes.url) {
+          finalImageUrl = uploadRes.url;
+        } else {
+          toast.error(`ไม่สามารถอัปโหลดรูปภาพได้: ${uploadRes.error || 'Network error'}`);
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเพื่ออัปโหลดพัสดุ');
+        setIsSubmitting(false);
+        return;
       }
     }
     
@@ -323,6 +353,103 @@ export default function EquipmentsPage() {
 
       {showQRModal && <QRCodeModal equipment={qrEquipment} allEquipments={qrBatchMode ? filteredEquipments : [qrEquipment]} onClose={closeQR} />}
       {showIssueModal && <IssueModal equipment={issueEquipment} onClose={closeIssue} />}
+
+      {isDetailsModalOpen && detailsEq && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+            <div className="relative h-64 sm:h-80 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+              {detailsEq.ImageURL ? (
+                <img src={detailsEq.ImageURL} alt={detailsEq.Name} className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-24 h-24 text-slate-300 dark:text-slate-700" />
+              )}
+              <div className="absolute top-4 right-4 group">
+                <button 
+                  onClick={closeDetails} 
+                  className="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white transition-all shadow-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-12">
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500 text-white mb-2 shadow-lg">
+                  {detailsEq.CategoryName || 'ไม่ระบุหมวดหมู่'}
+                </div>
+                <h2 className="text-3xl font-black text-white drop-shadow-md">{detailsEq.Name}</h2>
+              </div>
+            </div>
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">รหัสพัสดุ (Equipment Code)</label>
+                  <div className="text-xl font-mono font-bold text-slate-800 dark:text-slate-100">{detailsEq.EquipmentCode}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">จำนวนคงเหลือ</label>
+                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                      {Number(detailsEq.Quantity).toLocaleString()} <span className="text-sm font-normal text-slate-400">{detailsEq.Unit}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">ราคาต่อหน่วย</label>
+                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                      ฿{Number(detailsEq.PricePerUnit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">สถานที่จัดเก็บ</label>
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <Search className="w-4 h-4 text-slate-400" />
+                    </div>
+                    {detailsEq.Location || 'ไม่ระบุสถานที่'}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">สถานะปัจจุบัน</label>
+                  <div className={clsx('inline-flex items-center px-4 py-1.5 rounded-xl font-bold border transition-all shadow-sm',
+                    detailsEq.Status === 'Active'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
+                    detailsEq.Status === 'Broken'   ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
+                    detailsEq.Status === 'Issued'   ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' :
+                    'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+                  )}>
+                    <div className={clsx('w-2 h-2 rounded-full mr-2 animate-pulse', 
+                      detailsEq.Status === 'Active' ? 'bg-emerald-500' : 
+                      detailsEq.Status === 'Broken' ? 'bg-red-500' : 'bg-blue-500'
+                    )}/>
+                    {detailsEq.Status === 'Active' ? 'พร้อมใช้งาน' : detailsEq.Status === 'Broken' ? 'ชำรุด' : detailsEq.Status === 'Issued' ? 'ถูกเบิกไป' : 'จำหน่ายออก'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 block">หมายเหตุ / ข้อมูลเพิ่มเติม</label>
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 italic leading-relaxed">
+                    {detailsEq.Notes || 'ไม่มีข้อมูลเพิ่มเติม'}
+                  </div>
+                </div>
+                <div className="pt-2 flex gap-3">
+                  <button 
+                   onClick={() => { closeDetails(); openIssue(detailsEq); }}
+                   disabled={detailsEq.Status === 'Issued' || Number(detailsEq.Quantity) <= 0}
+                   className="flex-1 btn-primary py-3 flex items-center justify-center gap-2 shadow-blue-500/20 disabled:opacity-40"
+                  >
+                    <Send className="w-4 h-4" /> ทำรายการเบิก
+                  </button>
+                  <button 
+                   onClick={() => { closeDetails(); openQR(detailsEq); }}
+                   className="btn-secondary w-14 h-full flex items-center justify-center"
+                  >
+                    <QrCode className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && canEdit && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
