@@ -28,21 +28,45 @@ type EquipmentForm = {
 
 
 /**
- * Converts any Google Drive URL format to the lh3.googleusercontent CDN format
- * which serves raw image bytes directly (no redirects, works in <img> tags).
- * Supports: export=download, export=view, /file/d/, and already-converted URLs.
+ * Extracts the Google Drive File ID from any known URL format.
+ */
+function extractDriveFileId(url: string): string | null {
+  // Handle uc?id=XXX or uc?export=...&id=XXX
+  const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (ucMatch) return ucMatch[1];
+  // Handle /file/d/XXX/view
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return fileMatch[1];
+  // Handle lh3.googleusercontent.com/d/XXX (already converted)
+  const lh3Match = url.match(/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+  if (lh3Match) return lh3Match[1];
+  // Handle thumbnail?id=XXX
+  const thumbMatch = url.match(/thumbnail\?id=([a-zA-Z0-9_-]+)/);
+  if (thumbMatch) return thumbMatch[1];
+  return null;
+}
+
+/**
+ * Returns a Google Drive thumbnail URL — the most reliable format for inline <img> display.
+ * Works for any file shared as "Anyone with the link" without auth cookies.
  */
 function getDriveImageUrl(url?: string): string {
   if (!url) return '';
-  // Already lh3 format
-  if (url.includes('lh3.googleusercontent.com')) return url;
-  // Handle uc?id=XXX or uc?export=...&id=XXX format
-  const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (ucMatch) return `https://lh3.googleusercontent.com/d/${ucMatch[1]}`;
-  // Handle /file/d/XXX/view format
-  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (fileMatch) return `https://lh3.googleusercontent.com/d/${fileMatch[1]}`;
-  // Return as-is if no pattern matches
+  const fileId = extractDriveFileId(url);
+  if (fileId) {
+    // thumbnail?id= is the most reliable format; sz=w800 gives good resolution
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+  }
+  return url;
+}
+
+/**
+ * Fallback URL if thumbnail fails (lh3 CDN direct)
+ */
+function getDriveFallbackUrl(url?: string): string {
+  if (!url) return '';
+  const fileId = extractDriveFileId(url);
+  if (fileId) return `https://lh3.googleusercontent.com/d/${fileId}`;
   return url;
 }
 
@@ -66,8 +90,13 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
               alt={eq.Name} 
               className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" 
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                const fallback = getDriveFallbackUrl(eq.ImageURL);
+                if (e.currentTarget.src !== fallback) {
+                  e.currentTarget.src = fallback;
+                } else {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                }
               }}
             />
           ) : null}
@@ -418,8 +447,13 @@ export default function EquipmentsPage() {
                   alt={detailsEq.Name} 
                   className="w-full h-full object-cover" 
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement?.querySelector('.details-fallback')?.classList.remove('hidden');
+                    const fallback = getDriveFallbackUrl(detailsEq.ImageURL);
+                    if (e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    } else {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement?.querySelector('.details-fallback')?.classList.remove('hidden');
+                    }
                   }}
                 />
               ) : null}

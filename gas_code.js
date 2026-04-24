@@ -121,81 +121,13 @@ function doPost(e) {
       var folder = DriveApp.getFolderById(folderId);
       var blob = Utilities.newBlob(Utilities.base64Decode(data.base64.split(',')[1] || data.base64), 'image/jpeg', data.fileName || 'IMG.jpg');
       var file = folder.createFile(blob);
+      
+      // ตั้งค่าให้ไฟล์เป็น Public (Anyone with link) เพื่อให้แสดงผลใน img tag ได้
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       var fileId = file.getId();
-      // Use lh3.googleusercontent.com/d/ - this serves actual image bytes directly
-      // without the "Download anyway" redirect that breaks <img> tags
-      var imageUrl = "https://lh3.googleusercontent.com/d/" + fileId;
-
-      // AUTOMATIC LINKING: If equipmentCode is provided, update the sheet immediately
-      if (data.equipmentCode) {
-        var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-        var eqSheet = ss.getSheetByName('Equipments');
-        var reqSheet = ss.getSheetByName('ActionRequests');
-        
-        // RETRY MECHANISM: Wait for the record to be created by the main process
-        // Increased from 5 to 15 retries with 3s wait (45s total). This ensures if Vercel times out at 10s, 
-        // the client creates the record at 11s, and the GAS script will still find it!
-        var linked = false;
-        for (var retry = 0; retry < 15; retry++) {
-          if (retry > 0) Utilities.sleep(3000); // Wait 3s between retries
-          
-          // 1. Try to update Equipments sheet directly
-          var eqData = eqSheet.getDataRange().getValues();
-          var eqHeaders = eqData.length > 0 ? eqData[0] : [];
-          var eqCodeIdx = eqHeaders.indexOf('EquipmentCode');
-          var eqImgIdx = eqHeaders.indexOf('ImageURL');
-          
-          if (eqCodeIdx !== -1) {
-            if (eqImgIdx === -1) {
-              eqImgIdx = eqHeaders.length;
-              eqSheet.getRange(1, eqImgIdx + 1).setValue('ImageURL');
-            }
-            for (var i = 1; i < eqData.length; i++) {
-              if (String(eqData[i][eqCodeIdx]) === String(data.equipmentCode)) {
-                eqSheet.getRange(i + 1, eqImgIdx + 1).setValue(imageUrl);
-                linked = true;
-                break;
-              }
-            }
-          }
-          
-          // 2. Try to update pending requests in ActionRequests
-          if (!linked && reqSheet) {
-            var reqData = reqSheet.getDataRange().getValues();
-            var reqHeaders = reqData.length > 0 ? reqData[0] : [];
-            var payloadIdx = reqHeaders.indexOf('Payload');
-            var targetSheetIdx = reqHeaders.indexOf('TargetSheet');
-            var statusIdx = reqHeaders.indexOf('Status');
-            
-            if (payloadIdx !== -1 && targetSheetIdx !== -1 && statusIdx !== -1) {
-              for (var j = 1; j < reqData.length; j++) {
-                if (String(reqData[j][statusIdx]) === 'Pending' && String(reqData[j][targetSheetIdx]) === 'Equipments') {
-                  try {
-                    var payloadObj = JSON.parse(reqData[j][payloadIdx]);
-                    if (String(payloadObj.EquipmentCode) === String(data.equipmentCode)) {
-                      payloadObj.ImageURL = imageUrl;
-                      reqSheet.getRange(j + 1, payloadIdx + 1).setValue(JSON.stringify(payloadObj));
-                      linked = true;
-                    }
-                  } catch (e) {
-                    console.error("Failed to parse json from ActionRequests", e);
-                  }
-                }
-              }
-            }
-          }
-          
-          if (linked) {
-             // Invalidate cache immediately so frontend gets the image upon refresh
-             CacheService.getScriptCache().remove("all_data_json");
-             break;
-          }
-        }
-        
-        // Log the result for debugging in GAS
-        console.log("Background Linking for " + data.equipmentCode + (linked ? " SUCCESS" : " FAILED (Record not found after 15 retries)"));
-      }
+      
+      // ใช้ thumbnail URL เพื่อความเสถียรในการโหลดภาพ
+      var imageUrl = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w800";
 
       return ContentService.createTextOutput(JSON.stringify({ 
         success: true, 
