@@ -123,8 +123,9 @@ function doPost(e) {
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       var fileId = file.getId();
-      // Must use export=download or it returns an HTML preview page that breaks <img> tags
-      var imageUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+      // Use lh3.googleusercontent.com/d/ - this serves actual image bytes directly
+      // without the "Download anyway" redirect that breaks <img> tags
+      var imageUrl = "https://lh3.googleusercontent.com/d/" + fileId;
 
       // AUTOMATIC LINKING: If equipmentCode is provided, update the sheet immediately
       if (data.equipmentCode) {

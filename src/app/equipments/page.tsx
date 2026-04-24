@@ -26,6 +26,26 @@ type EquipmentForm = {
   ImageURL?: string;
 };
 
+
+/**
+ * Converts any Google Drive URL format to the lh3.googleusercontent CDN format
+ * which serves raw image bytes directly (no redirects, works in <img> tags).
+ * Supports: export=download, export=view, /file/d/, and already-converted URLs.
+ */
+function getDriveImageUrl(url?: string): string {
+  if (!url) return '';
+  // Already lh3 format
+  if (url.includes('lh3.googleusercontent.com')) return url;
+  // Handle uc?id=XXX or uc?export=...&id=XXX format
+  const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (ucMatch) return `https://lh3.googleusercontent.com/d/${ucMatch[1]}`;
+  // Handle /file/d/XXX/view format
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return `https://lh3.googleusercontent.com/d/${fileMatch[1]}`;
+  // Return as-is if no pattern matches
+  return url;
+}
+
 const inputCls = (hasError: boolean) =>
   `w-full p-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 ${
     hasError
@@ -42,7 +62,7 @@ const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue,
         <div className="flex items-center gap-3">
           {eq.ImageURL ? (
             <img 
-              src={eq.ImageURL} 
+              src={getDriveImageUrl(eq.ImageURL)} 
               alt={eq.Name} 
               className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" 
               onError={(e) => {
@@ -394,7 +414,7 @@ export default function EquipmentsPage() {
             <div className="relative h-64 sm:h-80 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
               {detailsEq.ImageURL ? (
                 <img 
-                  src={detailsEq.ImageURL} 
+                  src={getDriveImageUrl(detailsEq.ImageURL)} 
                   alt={detailsEq.Name} 
                   className="w-full h-full object-cover" 
                   onError={(e) => {
