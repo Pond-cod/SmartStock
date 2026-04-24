@@ -218,6 +218,8 @@ export default function EquipmentsPage() {
     }
     
     let finalImageUrl = data.ImageURL || '';
+    let optimisticTimeout = false;
+    
     if (imageFile) {
       try {
         const uploadRes = await uploadImage(imageFile, data.EquipmentCode);
@@ -243,6 +245,8 @@ export default function EquipmentsPage() {
             toast.success(`✅ การซิงค์ภาพพัสดุ ${data.EquipmentCode} ในพื้นหลังน่าจะเสร็จสิ้นแล้ว! (กรุณา Refresh หน้าจอเพื่อดูรูปภาพ)`);
             refreshData(); // Attempt to refresh local context
           }, 25000);
+          
+          optimisticTimeout = true;
         }
       } catch (err) {
         toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเพื่ออัปโหลดพัสดุ');
@@ -252,6 +256,13 @@ export default function EquipmentsPage() {
     }
     
     const finalData = { ...data, ImageURL: finalImageUrl };
+    
+    // Prevent race condition: if it timed out, the background GAS is linking it. 
+    // If we send the old ImageURL now, it might overwrite the GAS linked one.
+    if (imageFile && optimisticTimeout) {
+      delete (finalData as any).ImageURL;
+    }
+
     const res = editingEq ? await updateRecord('Equipments', finalData) : await createRecord('Equipments', finalData);
     
     if (res.success) {

@@ -124,20 +124,59 @@ function doPost(e) {
       if (data.equipmentCode) {
         var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         var eqSheet = ss.getSheetByName('Equipments');
+        var reqSheet = ss.getSheetByName('ActionRequests');
         
         // RETRY MECHANISM: Wait for the record to be created by the main process
         var linked = false;
         for (var retry = 0; retry < 5; retry++) {
           if (retry > 0) Utilities.sleep(2000); // Wait 2s between retries
           
+          // 1. Try to update Equipments sheet directly
           var eqData = eqSheet.getDataRange().getValues();
-          for (var i = 1; i < eqData.length; i++) {
-            if (String(eqData[i][0]) === String(data.equipmentCode)) {
-              eqSheet.getRange(i + 1, 9).setValue(imageUrl); // Column 9 is ImageURL
-              linked = true;
-              break;
+          var eqHeaders = eqData.length > 0 ? eqData[0] : [];
+          var eqCodeIdx = eqHeaders.indexOf('EquipmentCode');
+          var eqImgIdx = eqHeaders.indexOf('ImageURL');
+          
+          if (eqCodeIdx !== -1) {
+            if (eqImgIdx === -1) {
+              eqImgIdx = eqHeaders.length;
+              eqSheet.getRange(1, eqImgIdx + 1).setValue('ImageURL');
+            }
+            for (var i = 1; i < eqData.length; i++) {
+              if (String(eqData[i][eqCodeIdx]) === String(data.equipmentCode)) {
+                eqSheet.getRange(i + 1, eqImgIdx + 1).setValue(imageUrl);
+                linked = true;
+                break;
+              }
             }
           }
+          
+          // 2. Try to update pending requests in ActionRequests
+          if (reqSheet) {
+            var reqData = reqSheet.getDataRange().getValues();
+            var reqHeaders = reqData.length > 0 ? reqData[0] : [];
+            var payloadIdx = reqHeaders.indexOf('Payload');
+            var targetSheetIdx = reqHeaders.indexOf('TargetSheet');
+            var statusIdx = reqHeaders.indexOf('Status');
+            
+            if (payloadIdx !== -1 && targetSheetIdx !== -1 && statusIdx !== -1) {
+              for (var j = 1; j < reqData.length; j++) {
+                if (String(reqData[j][statusIdx]) === 'Pending' && String(reqData[j][targetSheetIdx]) === 'Equipments') {
+                  try {
+                    var payloadObj = JSON.parse(reqData[j][payloadIdx]);
+                    if (String(payloadObj.EquipmentCode) === String(data.equipmentCode)) {
+                      payloadObj.ImageURL = imageUrl;
+                      reqSheet.getRange(j + 1, payloadIdx + 1).setValue(JSON.stringify(payloadObj));
+                      linked = true;
+                    }
+                  } catch (e) {
+                    console.error("Failed to parse json from ActionRequests", e);
+                  }
+                }
+              }
+            }
+          }
+          
           if (linked) break;
         }
         
