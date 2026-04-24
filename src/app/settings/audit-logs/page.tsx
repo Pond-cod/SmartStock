@@ -1,8 +1,9 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { ShieldAlert, Clock, User, FileText, ChevronDown, ChevronUp, Database } from 'lucide-react';
 import clsx from 'clsx';
+// ... DiffVisualizer is the same
 
 function DiffVisualizer({ diffStr }: { diffStr: string }) {
   if (!diffStr) return <span className="text-sm text-slate-400 italic">ไม่มีข้อมูลการเปลี่ยนแปลง</span>;
@@ -51,10 +52,32 @@ function DiffVisualizer({ diffStr }: { diffStr: string }) {
 }
 
 export default function AuditLogsPage() {
-  const { systemLogs, isLoading } = useData();
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
-  const logs = [...(systemLogs || [])].sort((a, b) => new Date(b.Timestamp).getTime() - new Date(a.Timestamp).getTime());
+  useEffect(() => {
+    let active = true;
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch('/api/spreadsheet?sheet=SystemLogs');
+        const data = await res.json();
+        if (active && Array.isArray(data)) {
+          // Limit to latest 100 logs to preserve browser performance
+          setSystemLogs(data.slice(-100));
+        }
+      } catch (e) {
+        console.error('Failed to fetch system logs', e);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    fetchLogs();
+    
+    return () => { active = false; };
+  }, []);
+
+  const logs = [...systemLogs].sort((a, b) => new Date(b.Timestamp).getTime() - new Date(a.Timestamp).getTime());
 
   return (
     <div className="space-y-6 max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500">

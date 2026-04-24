@@ -50,12 +50,17 @@ function doGet(e) {
       Transactions: getSheetData('Transactions'),
       RolePermissions: getSheetData('RolePermissions'),
       ActionRequests: getSheetData('ActionRequests'),
-      'super Admin': getSheetData('super Admin'),
-      SystemLogs: getSheetData('SystemLogs')
+      'super Admin': getSheetData('super Admin')
+      // SystemLogs intentionally removed to prevent huge payload over-fetching
     };
     
     const resultJson = JSON.stringify(result);
-    cache.put("all_data_json", resultJson, 30); // Faster refresh for approvals
+    try {
+      cache.put("all_data_json", resultJson, 30); // Faster refresh for approvals
+    } catch(e) {
+      // 100KB limit hit, ignore caching, just serve natively
+      console.warn("Database payload exceeds 100KB cache limit. Bypassing ScriptCache.", e);
+    }
     return ContentService.createTextOutput(resultJson).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -118,6 +123,7 @@ function doPost(e) {
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       var fileId = file.getId();
+      // Must use export=download or it returns an HTML preview page that breaks <img> tags
       var imageUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
 
       // AUTOMATIC LINKING: If equipmentCode is provided, update the sheet immediately
@@ -127,9 +133,11 @@ function doPost(e) {
         var reqSheet = ss.getSheetByName('ActionRequests');
         
         // RETRY MECHANISM: Wait for the record to be created by the main process
+        // Increased from 5 to 15 retries with 3s wait (45s total). This ensures if Vercel times out at 10s, 
+        // the client creates the record at 11s, and the GAS script will still find it!
         var linked = false;
-        for (var retry = 0; retry < 5; retry++) {
-          if (retry > 0) Utilities.sleep(2000); // Wait 2s between retries
+        for (var retry = 0; retry < 15; retry++) {
+          if (retry > 0) Utilities.sleep(3000); // Wait 3s between retries
           
           // 1. Try to update Equipments sheet directly
           var eqData = eqSheet.getDataRange().getValues();
@@ -152,7 +160,7 @@ function doPost(e) {
           }
           
           // 2. Try to update pending requests in ActionRequests
-          if (reqSheet) {
+          if (!linked && reqSheet) {
             var reqData = reqSheet.getDataRange().getValues();
             var reqHeaders = reqData.length > 0 ? reqData[0] : [];
             var payloadIdx = reqHeaders.indexOf('Payload');
@@ -177,11 +185,15 @@ function doPost(e) {
             }
           }
           
-          if (linked) break;
+          if (linked) {
+             // Invalidate cache immediately so frontend gets the image upon refresh
+             CacheService.getScriptCache().remove("all_data_json");
+             break;
+          }
         }
         
         // Log the result for debugging in GAS
-        console.log("Background Linking for " + data.equipmentCode + (linked ? " SUCCESS" : " FAILED (Record not found after 5 retries)"));
+        console.log("Background Linking for " + data.equipmentCode + (linked ? " SUCCESS" : " FAILED (Record not found after 15 retries)"));
       }
 
       return ContentService.createTextOutput(JSON.stringify({ 
@@ -438,8 +450,12 @@ function doPost(e) {
     let currentEqQty = Number(eqRow[eqHeaders.indexOf('Quantity')]);
     
     if (action === 'APPROVE_ISSUE' || action === 'ISSUE_DIRECT') {
+      if (currentEqQty < qty) {
+        if (lock) lock.releaseLock();
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: "ยอดพัสดุคงเหลือไม่เพียงพอต่อการเบิก (Insufficient stock)"})).setMimeType(ContentService.MimeType.JSON);
+      }
       txSheet.getRange(txRowIndex, txHeaders.indexOf('Status') + 1).setValue('Active');
-      const newQty = Math.max(0, currentEqQty - qty);
+      const newQty = currentEqQty - qty;
       eqSheet.getRange(eqRowIndex, eqHeaders.indexOf('Quantity') + 1).setValue(newQty);
       if (newQty === 0) eqSheet.getRange(eqRowIndex, eqHeaders.indexOf('Status') + 1).setValue('Issued');
     } else {
