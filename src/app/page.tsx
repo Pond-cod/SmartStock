@@ -10,7 +10,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import Link from 'next/link';
 import clsx from 'clsx';
 import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
-import { Equipment } from '@/context/DataContext';
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
@@ -307,7 +306,7 @@ export default function DashboardPage() {
                ))}
              </div>
           ) : (
-            <AdaptiveTable<Equipment>
+            <AdaptiveTable<any>
               columns={[
                 { header: 'รหัสพัสดุ', accessorKey: 'EquipmentCode', cell: (row) => <span className="font-bold text-slate-400 text-xs">{row.EquipmentCode}</span> },
                 { header: 'ชื่อพัสดุ', accessorKey: 'Name', cell: (row) => <span className="font-bold text-slate-700">{row.Name}</span> },
