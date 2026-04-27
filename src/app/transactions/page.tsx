@@ -97,7 +97,6 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden p-0">
         {isLoading ? (
           <div className="text-center py-20 text-slate-400 italic">กำลังโหลดประวัติ...</div>
