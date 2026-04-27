@@ -16,6 +16,7 @@ type AdaptiveTableProps<T> = {
   mobileCardTitleAccessor: keyof T;
   mobileCardSubtitleAccessor?: keyof T;
   onRowClick?: (row: T) => void;
+  mobileActions?: (row: T) => React.ReactNode;
 };
 
 export default function AdaptiveTable<T extends Record<string, any>>({
@@ -24,7 +25,8 @@ export default function AdaptiveTable<T extends Record<string, any>>({
   keyExtractor,
   mobileCardTitleAccessor,
   mobileCardSubtitleAccessor,
-  onRowClick
+  onRowClick,
+  mobileActions
 }: AdaptiveTableProps<T>) {
 
   if (!data || data.length === 0) {
@@ -37,7 +39,7 @@ export default function AdaptiveTable<T extends Record<string, any>>({
 
   return (
     <div className="w-full">
-      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="hidden md:block print:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50/80 text-slate-600 border-b border-slate-200">
@@ -71,7 +73,7 @@ export default function AdaptiveTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden print:hidden space-y-4">
         {data.map((row) => (
           <div
             key={keyExtractor(row)}
@@ -92,10 +94,12 @@ export default function AdaptiveTable<T extends Record<string, any>>({
                   </p>
                 )}
               </div>
-              <button className="text-slate-400 hover:bg-slate-100 p-1.5 rounded-md min-w-[44px] min-h-[44px] flex items-center justify-center">
-                <MoreVertical className="w-5 h-5" />
-              </button>
-            </div>
+                {mobileActions && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {mobileActions(row)}
+                  </div>
+                )}
+              </div>
 
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-slate-100 text-sm">
               {columns

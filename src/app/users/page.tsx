@@ -7,6 +7,7 @@ import { Plus, Edit2, Trash2, X, AlertCircle, Users as UsersIcon, Eye, EyeOff, K
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 type UserForm = {
   Username: string;
@@ -218,73 +219,94 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4">Username</th>
-              <th className="px-6 py-4">ชื่อ-นามสกุล</th>
-              <th className="px-6 py-4 text-center">สิทธิ์การใช้งาน</th>
-              <th className="px-6 py-4 text-right">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-               [...Array(3)].map((_, i) => (
-                 <tr key={i} className="animate-pulse">
-                   <td className="px-6 py-4"><div className="h-4 w-24 bg-slate-100 rounded" /></td>
-                   <td className="px-6 py-4"><div className="h-4 w-40 bg-slate-100 rounded" /></td>
-                   <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-100 mx-auto rounded-full" /></td>
-                   <td className="px-6 py-4"><div className="h-8 w-16 bg-slate-100 ml-auto rounded" /></td>
-                 </tr>
-               ))
-            ) : displayUsers.length === 0 ? (
-               <tr>
-                 <td colSpan={4} className="px-6 py-20 text-center text-slate-400 italic">ไม่พบข้อมูลในกลุ่มนี้</td>
-               </tr>
-            ) : displayUsers.map((user) => (
-              <tr key={user.Username} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-slate-700">{user.Username}</td>
-                <td className="px-6 py-4 text-slate-600">{user.name || user.FirstName} {user.Surname || user.LastName}</td>
-                <td className="px-6 py-4 text-center">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-0">
+        {isLoading ? (
+          <div className="text-center py-20 text-slate-400 italic">กำลังโหลดข้อมูล...</div>
+        ) : (
+          <AdaptiveTable<any>
+            columns={[
+              { header: 'Username', accessorKey: 'Username', cell: (row) => <span className="font-bold text-slate-700">{row.Username}</span> },
+              { header: 'ชื่อ-นามสกุล', accessorKey: 'name', cell: (row) => <span className="text-slate-600">{row.name || row.FirstName} {row.Surname || row.LastName}</span> },
+              { 
+                header: 'สิทธิ์การใช้งาน', 
+                accessorKey: 'Role', 
+                cell: (row) => (
                   <span className={clsx(
                     "px-2.5 py-1 rounded-full text-[10px] font-black uppercase",
-                    user.Role === 'super Admin' ? 'bg-indigo-600 text-white' : 
-                    user.Role === 'Admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                    row.Role === 'super Admin' ? 'bg-indigo-600 text-white' : 
+                    row.Role === 'Admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
                   )}>
-                    {user.Role}
+                    {row.Role}
                   </span>
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button 
-                    onClick={() => handleResetPassword(user.Username)} 
-                    disabled={!isSuper && user.Role === 'Admin'}
-                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-30"
-                    title="รีเซ็ตรหัสผ่าน"
-                  >
-                    <Key className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => openModal(user)} 
-                    disabled={!isSuper && user.Role === 'Admin'}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30"
-                    title="แก้ไขผู้ใช้งาน"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(user.Username)} 
-                    disabled={(activeTab === 'standard' && user.Username === 'admin') || (activeTab === 'super' && user.Username === currentUser.Username) || (!isSuper && user.Role === 'Admin')}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
-                    title="ลบผู้ใช้งาน"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                ) 
+              },
+              {
+                header: 'จัดการ',
+                accessorKey: 'actions',
+                cell: (row) => (
+                  <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleResetPassword(row.Username); }} 
+                      disabled={!isSuper && row.Role === 'Admin'}
+                      className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-30"
+                      title="รีเซ็ตรหัสผ่าน"
+                    >
+                      <Key className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openModal(row); }} 
+                      disabled={!isSuper && row.Role === 'Admin'}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30"
+                      title="แก้ไขผู้ใช้งาน"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDelete(row.Username); }} 
+                      disabled={(activeTab === 'standard' && row.Username === 'admin') || (activeTab === 'super' && row.Username === currentUser.Username) || (!isSuper && row.Role === 'Admin')}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                      title="ลบผู้ใช้งาน"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={displayUsers}
+            keyExtractor={(row) => row.Username}
+            mobileCardTitleAccessor="Username"
+            mobileCardSubtitleAccessor="Role"
+            mobileActions={(row) => (
+              <div className="flex gap-2 justify-end mt-2">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleResetPassword(row.Username); }} 
+                  disabled={!isSuper && row.Role === 'Admin'}
+                  className="p-2 text-emerald-600 bg-emerald-50 rounded-lg transition-colors disabled:opacity-30"
+                  title="รีเซ็ตรหัสผ่าน"
+                >
+                  <Key className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); openModal(row); }} 
+                  disabled={!isSuper && row.Role === 'Admin'}
+                  className="p-2 text-blue-600 bg-blue-50 rounded-lg transition-colors disabled:opacity-30"
+                  title="แก้ไขผู้ใช้งาน"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleDelete(row.Username); }} 
+                  disabled={(activeTab === 'standard' && row.Username === 'admin') || (activeTab === 'super' && row.Username === currentUser.Username) || (!isSuper && row.Role === 'Admin')}
+                  className="p-2 text-red-600 bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                  title="ลบผู้ใช้งาน"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          />
+        )}
       </div>
 
       {isModalOpen && (

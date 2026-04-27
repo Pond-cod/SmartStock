@@ -123,7 +123,12 @@ function doPost(e) {
       var file = folder.createFile(blob);
       
       // ตั้งค่าให้ไฟล์เป็น Public (Anyone with link) เพื่อให้แสดงผลใน img tag ได้
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      // ใส่ try-catch ป้องกันกรณี Google Workspace ขององค์กรไม่อนุญาตให้แชร์ Public
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareErr) {
+        console.warn("Could not set public sharing (Policy restriction):", shareErr);
+      }
       var fileId = file.getId();
       
       // ใช้ thumbnail URL เพื่อความเสถียรในการโหลดภาพ

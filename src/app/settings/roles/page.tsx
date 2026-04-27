@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
 import { Shield, Plus, Save, Trash2, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 const MODULES = [
   { id: 'Dashboard', name: 'แดชบอร์ด' },
@@ -246,24 +247,17 @@ export default function RolesPermissionsPage() {
                     </div>
                   </div>
     
-                  <div className="p-0 overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-white">
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Module / Page</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 text-center">Permissions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50">
-                        {MODULES.map((mod) => {
-                          const allowed = (role[mod.id] || '').split(',').map((s: string) => s.trim());
-                          return (
-                            <tr key={mod.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-6 py-4">
-                                <span className="font-bold text-slate-700">{mod.name}</span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex flex-wrap justify-center gap-2">
+                  <div className="p-0">
+                    <AdaptiveTable<any>
+                      columns={[
+                        { header: 'Module / Page', accessorKey: 'name', cell: (mod) => <span className="font-bold text-slate-700">{mod.name}</span> },
+                        { 
+                          header: 'Permissions', 
+                          accessorKey: 'permissions',
+                          cell: (mod) => {
+                            const allowed = (role[mod.id] || '').split(',').map((s: string) => s.trim());
+                            return (
+                                <div className="flex flex-wrap justify-center md:justify-start gap-2">
                                   {ACTIONS.map((action) => {
                                     const isActive = allowed.includes(action.id);
                                     return (
@@ -283,7 +277,7 @@ export default function RolesPermissionsPage() {
                                     );
                                   })}
                                   
-                                  <div className="w-px h-6 bg-slate-100 mx-1" />
+                                  <div className="hidden md:block w-px h-6 bg-slate-100 mx-1" />
 
                                   <button
                                     onClick={() => handleGrantAllLocal(role.RoleName, mod.id)}
@@ -292,12 +286,47 @@ export default function RolesPermissionsPage() {
                                     อนุมัติทั้งหมด
                                   </button>
                                 </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            )
+                          }
+                        }
+                      ]}
+                      data={MODULES}
+                      keyExtractor={(mod) => mod.id}
+                      mobileCardTitleAccessor="name"
+                      mobileActions={(mod) => {
+                         const allowed = (role[mod.id] || '').split(',').map((s: string) => s.trim());
+                         return (
+                            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
+                               {ACTIONS.map((action) => {
+                                 const isActive = allowed.includes(action.id);
+                                 return (
+                                   <button
+                                     key={action.id}
+                                     onClick={() => handleToggleLocal(role.RoleName, mod.id, action.id)}
+                                     className={clsx(
+                                       "flex-1 px-2 py-2 rounded-lg text-[10px] font-black transition-all border flex items-center justify-center gap-1",
+                                       isActive 
+                                         ? clsx(action.color, "border-transparent shadow-sm") 
+                                         : "bg-slate-50 text-slate-300 border-slate-100 hover:border-slate-300"
+                                     )}
+                                   >
+                                     {isActive ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                                     {action.name}
+                                   </button>
+                                 );
+                               })}
+                               <div className="w-full mt-1">
+                                 <button
+                                   onClick={() => handleGrantAllLocal(role.RoleName, mod.id)}
+                                   className="w-full px-3 py-2 rounded-lg text-[10px] font-black text-indigo-500 bg-indigo-50 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-tight text-center"
+                                 >
+                                   อนุมัติทั้งหมด
+                                 </button>
+                               </div>
+                            </div>
+                         )
+                      }}
+                    />
                   </div>
                 </div>
               );

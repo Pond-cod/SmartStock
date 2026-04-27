@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useData } from '@/context/DataContext';
 import { Download, Printer, FileText, Package, BarChart3, AlertCircle } from 'lucide-react';
 import * as xlsx from 'xlsx';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 export default function ReportsPage() {
   const { equipments, isLoading } = useData();
@@ -77,32 +78,32 @@ export default function ReportsPage() {
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden print:rounded-none print:border-none print:shadow-none">
         <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full text-left text-sm whitespace-nowrap print:whitespace-normal print:w-full print:border-collapse">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[10px] font-black print:bg-gray-100 print:text-black">
-              <tr>
-                <th className="px-6 py-4 print:py-2 print:px-2 print:border">รหัส</th>
-                <th className="px-6 py-4 print:py-2 print:px-2 print:border">รายการ</th>
-                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">จำนวน</th>
-                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">ราคา/หน่วย</th>
-                <th className="px-6 py-4 text-right print:py-2 print:px-2 print:border">ราคารวม</th>
-                <th className="px-6 py-4 text-center print:py-2 print:px-2 print:border">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 print:divide-y-0">
-              {reportData.map(eq => (
-                <tr key={eq.EquipmentCode} className="hover:bg-slate-50/50 transition-colors print:border-b print:border-gray-200">
-                  <td className="px-6 py-4 font-bold text-slate-400 text-xs print:py-2 print:px-2 print:border print:text-gray-800">{eq.EquipmentCode}</td>
-                  <td className="px-6 py-4 font-bold text-slate-700 print:py-2 print:px-2 print:border print:text-black">{eq.Name}</td>
-                  <td className="px-6 py-4 text-right font-medium print:py-2 print:px-2 print:border">{eq.Quantity} <span className="text-[10px] text-slate-400 print:text-gray-600">{eq.Unit}</span></td>
-                  <td className="px-6 py-4 text-right print:py-2 print:px-2 print:border">฿{Number(eq.PricePerUnit).toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right font-black text-slate-800 print:py-2 print:px-2 print:border print:text-black">฿{eq.TotalValue.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-center print:py-2 print:px-2 print:border">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black print:bg-transparent print:text-black print:p-0 print:font-normal ${eq.Status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{eq.Status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <AdaptiveTable<any>
+            columns={[
+              { header: 'รหัส', accessorKey: 'EquipmentCode', cell: (row) => <span className="font-bold text-slate-400 text-xs print:text-gray-800">{row.EquipmentCode}</span> },
+              { header: 'รายการ', accessorKey: 'Name', cell: (row) => <span className="font-bold text-slate-700 print:text-black">{row.Name}</span> },
+              { 
+                header: 'จำนวน', 
+                accessorKey: 'Quantity', 
+                cell: (row) => <span className="font-medium">{row.Quantity} <span className="text-[10px] text-slate-400 print:text-gray-600">{row.Unit}</span></span> 
+              },
+              { header: 'ราคา/หน่วย', accessorKey: 'PricePerUnit', cell: (row) => <span>฿{Number(row.PricePerUnit).toLocaleString()}</span> },
+              { header: 'ราคารวม', accessorKey: 'TotalValue', cell: (row) => <span className="font-black text-slate-800 print:text-black">฿{row.TotalValue.toLocaleString()}</span> },
+              { 
+                header: 'สถานะ', 
+                accessorKey: 'Status', 
+                cell: (row) => (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black print:bg-transparent print:text-black print:p-0 print:font-normal ${row.Status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                    {row.Status}
+                  </span>
+                )
+              }
+            ]}
+            data={reportData}
+            keyExtractor={(row) => row.EquipmentCode}
+            mobileCardTitleAccessor="Name"
+            mobileCardSubtitleAccessor="EquipmentCode"
+          />
           
           <div className="hidden print:flex justify-end mt-20 gap-32 pr-10">
              <div className="text-center">

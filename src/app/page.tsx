@@ -9,6 +9,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import Link from 'next/link';
 import clsx from 'clsx';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import { Equipment } from '@/context/DataContext';
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
@@ -130,7 +132,7 @@ export default function DashboardPage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="kpi-card animate-pulse">
               <div className="w-12 h-12 rounded-xl bg-slate-200" />
@@ -142,7 +144,7 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <KpiCard
             title="พัสดุทั้งหมด"
             value={stats.total}
@@ -267,7 +269,7 @@ export default function DashboardPage() {
       </div>
 
       {!isLoading && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'ใช้งานปกติ', count: stats.active, color: 'border-emerald-400 bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
             { label: 'ชำรุด', count: stats.broken, color: 'border-red-400 bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
@@ -294,43 +296,31 @@ export default function DashboardPage() {
             ดูทั้งหมด <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-500 font-bold border-b border-slate-100">
-                <th className="px-5 py-3.5">รหัสพัสดุ</th>
-                <th>ชื่อพัสดุ</th>
-                <th className="hidden sm:table-cell">หมวดหมู่</th>
-                <th className="hidden md:table-cell text-right">จำนวนคงเหลือ</th>
-                <th className="px-5 py-3.5 text-center">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-4 w-20 bg-slate-100 rounded" /></td>
-                    <td><div className="h-4 w-40 bg-slate-100 rounded" /></td>
-                    <td><div className="h-4 w-24 bg-slate-100 rounded" /></td>
-                    <td><div className="h-4 w-12 bg-slate-100 ml-auto rounded" /></td>
-                    <td className="px-5 py-4"><div className="h-6 w-16 bg-slate-100 mx-auto rounded-lg" /></td>
-                  </tr>
-                ))
-              ) : (
-                equipments.slice(0, 10).map((eq) => (
-                  <tr key={eq.EquipmentCode} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-4 font-bold text-slate-400 text-xs">{eq.EquipmentCode}</td>
-                    <td className="font-bold text-slate-700">{eq.Name}</td>
-                    <td className="hidden sm:table-cell text-slate-500">{eq.CategoryName}</td>
-                    <td className="hidden md:table-cell text-right font-bold text-slate-600">{eq.Quantity} {eq.Unit}</td>
-                    <td className="px-5 py-4 text-center">
-                      <StatusBadge status={eq.Status} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="p-0">
+          {isLoading ? (
+             <div className="p-5 space-y-4">
+               {[...Array(5)].map((_, i) => (
+                 <div key={i} className="animate-pulse flex items-center justify-between">
+                   <div className="h-4 w-1/3 bg-slate-100 rounded" />
+                   <div className="h-4 w-1/4 bg-slate-100 rounded" />
+                 </div>
+               ))}
+             </div>
+          ) : (
+            <AdaptiveTable<Equipment>
+              columns={[
+                { header: 'รหัสพัสดุ', accessorKey: 'EquipmentCode', cell: (row) => <span className="font-bold text-slate-400 text-xs">{row.EquipmentCode}</span> },
+                { header: 'ชื่อพัสดุ', accessorKey: 'Name', cell: (row) => <span className="font-bold text-slate-700">{row.Name}</span> },
+                { header: 'หมวดหมู่', accessorKey: 'CategoryName', hiddenOnMobile: true },
+                { header: 'จำนวนคงเหลือ', accessorKey: 'Quantity', cell: (row) => <span className="font-bold text-slate-600">{row.Quantity} {row.Unit}</span> },
+                { header: 'สถานะ', accessorKey: 'Status', cell: (row) => <StatusBadge status={row.Status} /> }
+              ]}
+              data={equipments.slice(0, 10)}
+              keyExtractor={(row) => row.EquipmentCode}
+              mobileCardTitleAccessor="Name"
+              mobileCardSubtitleAccessor="EquipmentCode"
+            />
+          )}
         </div>
       </div>
     </div>

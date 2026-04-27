@@ -124,4 +124,19 @@ body {
 @media print {
   .no-print { display: none !important; }
   @page { margin: 1cm; size: auto; }
+  
+  table, th, td {
+    border: 1px solid #ddd !important;
+    color: black !important;
+  }
+  th, td {
+    padding: 8px !important;
+  }
+  thead {
+    background-color: #f3f4f6 !important;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
 }

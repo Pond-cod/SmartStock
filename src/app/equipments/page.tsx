@@ -12,6 +12,7 @@ import QRCodeModal from '@/components/QRCodeModal';
 import IssueModal from '@/components/IssueModal';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 type EquipmentForm = {
   EquipmentCode: string;
@@ -77,101 +78,7 @@ const inputCls = (hasError: boolean) =>
       : 'border-slate-200 dark:border-slate-700 focus:ring-primary/20 focus:border-primary'
   }`;
 
-const EquipmentRow = React.memo(({ eq, i, canEdit, openQR, openModal, openIssue, openDetails, handleDelete }: any) => {
-  const isOut = eq.Status === 'Issued' || Number(eq.Quantity) <= 0;
-  return (
-    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-      <td className="px-6 py-4 font-mono text-xs font-bold text-slate-500">{eq.EquipmentCode}</td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          {eq.ImageURL ? (
-            <img 
-              src={getDriveImageUrl(eq.ImageURL)} 
-              alt={eq.Name} 
-              className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" 
-              onError={(e) => {
-                const fallback = getDriveFallbackUrl(eq.ImageURL);
-                if (e.currentTarget.src !== fallback) {
-                  e.currentTarget.src = fallback;
-                } else {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                }
-              }}
-            />
-          ) : null}
-          <div className={clsx("w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-400 fallback-icon", eq.ImageURL && "hidden")}>
-            <Package className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="font-semibold text-slate-800 dark:text-slate-100">{eq.Name}</div>
-            {eq.Notes && <div className="text-xs text-slate-400 truncate max-w-[150px] mt-0.5">{eq.Notes}</div>}
-          </div>
-        </div>
-      </td>
-      <td className="px-6 py-4 hidden sm:table-cell">
-        <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{eq.CategoryName || 'ไม่ระบุหมวดหมู่'}</span>
-      </td>
-      <td className="px-6 py-4 text-right font-medium text-slate-800 dark:text-slate-100 hidden md:table-cell">
-        {Number(eq.Quantity).toLocaleString()} <span className="text-xs text-slate-400 font-normal">{eq.Unit}</span>
-      </td>
-      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 hidden lg:table-cell">{eq.Location || '-'}</td>
-      <td className="px-6 py-4">
-        <span className={clsx('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border',
-          eq.Status === 'Active'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
-          eq.Status === 'Broken'   ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
-          eq.Status === 'Issued'   ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' :
-          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
-        )}>
-          {eq.Status === 'Active' ? 'พร้อมใช้งาน' : eq.Status === 'Broken' ? 'ชำรุด' : eq.Status === 'Issued' ? 'ถูกเบิกไป' : 'จำหน่ายออก'}
-        </span>
-      </td>
-      <td className="px-3 py-4 text-center">
-        <div className="flex justify-center gap-1.5">
-          <Tooltip text="ดูรายละเอียดพัสดุ">
-            <button
-              onClick={() => openDetails(eq)}
-              className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-          </Tooltip>
-          <Tooltip text="ทำรายการเบิกพัสดุ">
-            <button
-              onClick={() => openIssue(eq)}
-              disabled={isOut}
-              className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </Tooltip>
-          <Tooltip text={`QR Code: ${eq.Name}`}>
-            <button
-              onClick={() => openQR(eq)}
-              className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[var(--primary)] hover:text-white text-slate-500 flex items-center justify-center transition-all"
-            >
-              <QrCode className="w-4 h-4" />
-            </button>
-          </Tooltip>
-        </div>
-      </td>
-      {canEdit && (
-        <td className="px-6 py-4">
-          <div className="flex justify-end gap-2">
-            <button onClick={() => openModal(eq)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-[var(--primary)] hover:bg-blue-50 flex items-center justify-center transition-all">
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button onClick={() => handleDelete(eq)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </td>
-      )}
-    </tr>
-  );
-});
-
-EquipmentRow.displayName = 'EquipmentRow';
+// EquipmentRow is now handled via AdaptiveTable
 
 export default function EquipmentsPage() {
   const { equipments, categories, isLoading, createRecord, updateRecord, deleteRecord, uploadImage, refreshData } = useData();
@@ -401,36 +308,108 @@ export default function EquipmentsPage() {
           <div className="text-sm font-medium text-slate-500 dark:text-slate-400">พบทั้งหมด {filteredEquipments.length} รายการ</div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[10px] font-black">
-              <tr>
-                <th className="px-6 py-4">รหัสพัสดุ</th>
-                <th className="px-6 py-4">ชื่อพัสดุ / รายละเอียด</th>
-                <th className="px-6 py-4 hidden sm:table-cell">หมวดหมู่</th>
-                <th className="px-6 py-4 text-right hidden md:table-cell">คงเหลือ</th>
-                <th className="px-6 py-4 hidden lg:table-cell">ที่เก็บ</th>
-                <th className="px-6 py-4">สถานะ</th>
-                <th className="px-6 py-4 text-center">ทำรายการ</th>
-                {canEdit && <th className="px-6 py-4 text-right">จัดการ</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {isLoading ? (
-                <tr><td colSpan={colSpan} className="text-center py-12 text-slate-500 italic">กำลังโหลดข้อมูล...</td></tr>
-              ) : filteredEquipments.length === 0 ? (
-                <tr><td colSpan={colSpan} className="text-center py-12 text-slate-500 italic font-medium">ไม่พบข้อมูลที่ค้นหา</td></tr>
-              ) : (
-                filteredEquipments.map((eq, i) => (
-                  <EquipmentRow
-                    key={eq.EquipmentCode || i}
-                    eq={eq} i={i} canEdit={canEdit}
-                    openQR={openQR} openModal={openModal} openIssue={openIssue} openDetails={openDetails} handleDelete={handleDelete}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="p-0">
+          {isLoading ? (
+            <div className="text-center py-12 text-slate-500 italic">กำลังโหลดข้อมูล...</div>
+          ) : (
+            <AdaptiveTable<any>
+              columns={[
+                { header: 'รหัสพัสดุ', accessorKey: 'EquipmentCode', cell: (row) => <span className="font-mono text-xs font-bold text-slate-500">{row.EquipmentCode}</span> },
+                { 
+                  header: 'ชื่อพัสดุ', 
+                  accessorKey: 'Name', 
+                  cell: (row) => (
+                    <div className="flex items-center gap-3">
+                      {row.ImageURL ? (
+                        <img 
+                          src={getDriveImageUrl(row.ImageURL)} 
+                          alt={row.Name} 
+                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm" 
+                          onError={(e) => {
+                            const fallback = getDriveFallbackUrl(row.ImageURL);
+                            if (e.currentTarget.src !== fallback) {
+                              e.currentTarget.src = fallback;
+                            } else {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div className={clsx("w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-400 fallback-icon", row.ImageURL && "hidden")}>
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-100">{row.Name}</div>
+                        {row.Notes && <div className="text-xs text-slate-400 truncate max-w-[150px] mt-0.5">{row.Notes}</div>}
+                      </div>
+                    </div>
+                  )
+                },
+                { 
+                  header: 'หมวดหมู่', 
+                  accessorKey: 'CategoryName', 
+                  hiddenOnMobile: true,
+                  cell: (row) => <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{row.CategoryName || 'ไม่ระบุ'}</span>
+                },
+                { 
+                  header: 'คงเหลือ', 
+                  accessorKey: 'Quantity', 
+                  cell: (row) => <span className="font-medium text-slate-800 dark:text-slate-100">{Number(row.Quantity).toLocaleString()} <span className="text-xs text-slate-400 font-normal">{row.Unit}</span></span>
+                },
+                { header: 'ที่เก็บ', accessorKey: 'Location', hiddenOnMobile: true, cell: (row) => <span className="text-slate-500">{row.Location || '-'}</span> },
+                { 
+                  header: 'สถานะ', 
+                  accessorKey: 'Status', 
+                  cell: (row) => (
+                    <span className={clsx('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border',
+                      row.Status === 'Active'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
+                      row.Status === 'Broken'   ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
+                      row.Status === 'Issued'   ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' :
+                      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+                    )}>
+                      {row.Status === 'Active' ? 'พร้อมใช้งาน' : row.Status === 'Broken' ? 'ชำรุด' : row.Status === 'Issued' ? 'ถูกเบิกไป' : 'จำหน่ายออก'}
+                    </span>
+                  )
+                },
+                {
+                  header: 'จัดการ',
+                  accessorKey: 'actions',
+                  cell: (row) => {
+                    const isOut = row.Status === 'Issued' || Number(row.Quantity) <= 0;
+                    return (
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button onClick={(e) => { e.stopPropagation(); openDetails(row); }} className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all"><Search className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); openIssue(row); }} disabled={isOut} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all disabled:opacity-30"><Send className="w-4 h-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); openQR(row); }} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-600 hover:text-white flex items-center justify-center transition-all"><QrCode className="w-4 h-4" /></button>
+                        {canEdit && (
+                          <>
+                            <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="w-8 h-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all"><Trash2 className="w-4 h-4" /></button>
+                          </>
+                        )}
+                      </div>
+                    )
+                  }
+                }
+              ]}
+              data={filteredEquipments}
+              keyExtractor={(row) => row.EquipmentCode}
+              mobileCardTitleAccessor="Name"
+              mobileCardSubtitleAccessor="EquipmentCode"
+              onRowClick={openDetails}
+              mobileActions={(row) => {
+                const isOut = row.Status === 'Issued' || Number(row.Quantity) <= 0;
+                return (
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <button onClick={(e) => { e.stopPropagation(); openDetails(row); }} className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><Search className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); openIssue(row); }} disabled={isOut} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center disabled:opacity-30"><Send className="w-4 h-4" /></button>
+                    {canEdit && <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center"><Edit2 className="w-4 h-4" /></button>}
+                  </div>
+                )
+              }}
+            />
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
 import { Plus, Edit2, Trash2, X, AlertCircle, Users, Building2, Save, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 export default function MasterDataPage() {
   const { personnel, departments, isLoading, createRecord, updateRecord, deleteRecord } = useData();
@@ -91,50 +92,76 @@ export default function MasterDataPage() {
         <button onClick={() => openModal()} className="btn-primary px-6 rounded-xl"><Plus className="w-4 h-4 mr-2" /> เพิ่มข้อมูล</button>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-black border-b border-slate-100">
-            {activeTab === 'personnel' ? (
-              <tr><th className="px-6 py-4">รหัส</th><th className="px-6 py-4">ชื่อ-นามสกุล</th><th className="px-6 py-4">แผนก</th><th className="px-6 py-4 hidden md:table-cell">ตำแหน่ง / เบอร์โทร</th><th className="px-6 py-4 text-right">จัดการ</th></tr>
-            ) : (
-              <tr><th className="px-6 py-4">รหัสแผนก</th><th className="px-6 py-4">ชื่อแผนก/ฝ่าย</th><th className="px-6 py-4 text-right">จัดการ</th></tr>
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden p-0">
+        {isLoading ? (
+          <div className="text-center py-20 text-slate-400 italic">กำลังโหลดข้อมูล...</div>
+        ) : activeTab === 'personnel' ? (
+          <AdaptiveTable<any>
+            columns={[
+              { header: 'รหัส', accessorKey: 'PersonnelID', cell: (row) => <span className="font-bold text-slate-400 text-xs">{row.PersonnelID}</span> },
+              { header: 'ชื่อ-นามสกุล', accessorKey: 'name', cell: (row) => <span className="font-bold text-slate-700">{row.name} {row.Surname}</span> },
+              { header: 'แผนก', accessorKey: 'department', cell: (row) => <span className="text-slate-500 font-medium">{departments.find(d => d.DepartmentID === row.department)?.DepartmentName || row.department}</span> },
+              { 
+                header: 'ตำแหน่ง / เบอร์โทร', 
+                accessorKey: 'ตำแหน่ง', 
+                hiddenOnMobile: true,
+                cell: (row) => (
+                  <div>
+                    <div className="text-slate-600 font-bold text-xs">{row['ตำแหน่ง'] || '-'}</div>
+                    <div className="text-slate-400 text-[10px]">{row['phone number'] || '-'}</div>
+                  </div>
+                )
+              },
+              {
+                header: 'จัดการ',
+                accessorKey: 'actions',
+                cell: (row) => (
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                )
+              }
+            ]}
+            data={personnel}
+            keyExtractor={(row) => row.PersonnelID}
+            mobileCardTitleAccessor="name"
+            mobileCardSubtitleAccessor="PersonnelID"
+            mobileActions={(row) => (
+              <div className="flex justify-end gap-2 mt-2">
+                <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="p-2 text-blue-600 bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 text-red-600 bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
+              </div>
             )}
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {isLoading ? (
-               <tr><td colSpan={5} className="py-20 text-center text-slate-400 italic">กำลังโหลดข้อมูล...</td></tr>
-            ) : activeTab === 'personnel' ? (
-              personnel.map(p => (
-                <tr key={p.PersonnelID} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-400 text-xs">{p.PersonnelID}</td>
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-slate-700">{p.name} {p.Surname}</div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500 font-medium">{departments.find(d => d.DepartmentID === p.department)?.DepartmentName || p.department}</td>
-                  <td className="px-6 py-4 hidden md:table-cell">
-                    <div className="text-slate-600 font-bold text-xs">{p['ตำแหน่ง'] || '-'}</div>
-                    <div className="text-slate-400 text-[10px]">{p['phone number'] || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-1">
-                    <button onClick={() => openModal(p)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDelete(p)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              departments.map(d => (
-                <tr key={d.DepartmentID} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-400 text-xs">{d.DepartmentID}</td>
-                  <td className="px-6 py-4 font-bold text-slate-700">{d.DepartmentName}</td>
-                  <td className="px-6 py-4 text-right space-x-1">
-                    <button onClick={() => openModal(d)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDelete(d)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
-                  </td>
-                </tr>
-              ))
+          />
+        ) : (
+          <AdaptiveTable<any>
+            columns={[
+              { header: 'รหัสแผนก', accessorKey: 'DepartmentID', cell: (row) => <span className="font-bold text-slate-400 text-xs">{row.DepartmentID}</span> },
+              { header: 'ชื่อแผนก/ฝ่าย', accessorKey: 'DepartmentName', cell: (row) => <span className="font-bold text-slate-700">{row.DepartmentName}</span> },
+              {
+                header: 'จัดการ',
+                accessorKey: 'actions',
+                cell: (row) => (
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                )
+              }
+            ]}
+            data={departments}
+            keyExtractor={(row) => row.DepartmentID}
+            mobileCardTitleAccessor="DepartmentName"
+            mobileCardSubtitleAccessor="DepartmentID"
+            mobileActions={(row) => (
+              <div className="flex justify-end gap-2 mt-2">
+                <button onClick={(e) => { e.stopPropagation(); openModal(row); }} className="p-2 text-blue-600 bg-blue-50 rounded-lg transition-colors" title="แก้ไข"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(row); }} className="p-2 text-red-600 bg-red-50 rounded-lg transition-colors" title="ลบ"><Trash2 className="w-4 h-4" /></button>
+              </div>
             )}
-          </tbody>
-        </table>
+          />
+        )}
       </div>
 
       {isModalOpen && (

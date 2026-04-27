@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { History, ArrowUpRight, ArrowDownLeft, Calendar, User as UserIcon, Search, Filter, RefreshCcw, CheckCircle2, Clock, Package, AlertCircle, X } from 'lucide-react';
 import clsx from 'clsx';
 import Tooltip from '@/components/Tooltip';
+import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
 
 export default function TransactionsPage() {
   const { transactions, equipments, returnAsset, approveTransaction, rejectTransaction, isLoading } = useData();
@@ -97,59 +98,99 @@ export default function TransactionsPage() {
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 border-b border-slate-100 dark:border-slate-800 uppercase text-[10px] font-black">
-              <tr>
-                <th className="px-6 py-4">ประเภท</th>
-                <th className="px-6 py-4">พัสดุ / รหัส</th>
-                <th className="px-6 py-4">ผู้ทำรายการ</th>
-                <th className="px-6 py-4">จำนวน</th>
-                <th className="px-6 py-4">วันที่</th>
-                <th className="px-6 py-4">สถานะ</th>
-                <th className="px-6 py-4 text-right">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-20 text-slate-400 italic">กำลังโหลดประวัติ...</td></tr>
-              ) : filteredTransactions.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-20 text-slate-400 italic">ไม่พบประวัติการทำรายการ</td></tr>
-              ) : filteredTransactions.map((tx) => {
-                const eq = equipments.find(e => e.EquipmentCode === tx.EquipmentCode);
-                const isPending = tx.Status === 'Pending-Approve';
-                const isActive = tx.Status === 'Active';
-                const isIssue = tx.Type === 'ISSUE';
-                return (
-                  <tr key={tx.TransactionID} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4"><div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", isPending ? "bg-amber-100 text-amber-600" : isIssue ? "bg-blue-100 text-blue-600" : "bg-emerald-100 text-emerald-600")}>{isPending ? <Clock className="w-5 h-5" /> : isIssue ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}</div></td>
-                    <td className="px-6 py-4"><div className="font-bold text-slate-700">{eq?.Name || 'ไม่พบข้อมูลพัสดุ'}</div><div className="text-xs text-slate-400">{tx.EquipmentCode}</div></td>
-                    <td className="px-6 py-4"><div className="flex items-center gap-2"><div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center font-bold text-[10px] text-slate-500 uppercase">{tx.ReceiverName?.slice(0,2)}</div><span className="font-medium">{tx.ReceiverName}</span></div></td>
-                    <td className="px-6 py-4 font-bold">{tx.Quantity} <span className="text-[10px] text-slate-400 font-normal">{eq?.Unit || 'หน่วย'}</span></td>
-                    <td className="px-6 py-4 text-slate-500">{new Date(tx.TransactionDate).toLocaleDateString('th-TH')}</td>
-                    <td className="px-6 py-4">
-                      {isPending ? <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">รออนุมัติ</span> :
-                       isActive ? <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">กำลังเบิก</span> :
-                       <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">คืนแล้ว</span>}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        {isPending && isAdmin && (
-                          <span className="text-[10px] text-amber-500/70 italic mr-2 border border-amber-500/20 px-2 py-1 rounded-md">รอการอนุมัติในศูนย์การอนุมัติ</span>
-                        )}
-                        {isActive && isAdmin && (
-                          <button onClick={() => handleReturn(tx.TransactionID)} disabled={!!isProcessing} className="bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all">
-                            <RefreshCcw className={clsx("w-3 h-3", isProcessing === tx.TransactionID && "animate-spin")} /> รับคืน
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden p-0">
+        {isLoading ? (
+          <div className="text-center py-20 text-slate-400 italic">กำลังโหลดประวัติ...</div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className="text-center py-20 text-slate-400 italic">ไม่พบประวัติการทำรายการ</div>
+        ) : (
+          <AdaptiveTable<any>
+            columns={[
+              { 
+                header: 'ประเภท', 
+                accessorKey: 'Type', 
+                hiddenOnMobile: true,
+                cell: (row) => {
+                  const isPending = row.Status === 'Pending-Approve';
+                  const isIssue = row.Type === 'ISSUE';
+                  return <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", isPending ? "bg-amber-100 text-amber-600" : isIssue ? "bg-blue-100 text-blue-600" : "bg-emerald-100 text-emerald-600")}>{isPending ? <Clock className="w-5 h-5" /> : isIssue ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}</div>
+                }
+              },
+              { 
+                header: 'พัสดุ / รหัส', 
+                accessorKey: 'EquipmentCode', 
+                cell: (row) => {
+                  const eq = equipments.find(e => e.EquipmentCode === row.EquipmentCode);
+                  return <div><div className="font-bold text-slate-700">{eq?.Name || 'ไม่พบข้อมูลพัสดุ'}</div><div className="text-xs text-slate-400">{row.EquipmentCode}</div></div>
+                }
+              },
+              { 
+                header: 'ผู้ทำรายการ', 
+                accessorKey: 'ReceiverName', 
+                cell: (row) => <div className="flex items-center gap-2"><div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center font-bold text-[10px] text-slate-500 uppercase">{row.ReceiverName?.slice(0,2)}</div><span className="font-medium">{row.ReceiverName}</span></div>
+              },
+              { 
+                header: 'จำนวน', 
+                accessorKey: 'Quantity', 
+                cell: (row) => {
+                  const eq = equipments.find(e => e.EquipmentCode === row.EquipmentCode);
+                  return <span className="font-bold">{row.Quantity} <span className="text-[10px] text-slate-400 font-normal">{eq?.Unit || 'หน่วย'}</span></span>
+                }
+              },
+              { header: 'วันที่', accessorKey: 'TransactionDate', cell: (row) => <span className="text-slate-500">{new Date(row.TransactionDate).toLocaleDateString('th-TH')}</span> },
+              { 
+                header: 'สถานะ', 
+                accessorKey: 'Status', 
+                cell: (row) => {
+                  const isPending = row.Status === 'Pending-Approve';
+                  const isActive = row.Status === 'Active';
+                  return isPending ? <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">รออนุมัติ</span> :
+                         isActive ? <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">กำลังเบิก</span> :
+                         <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">คืนแล้ว</span>
+                }
+              },
+              {
+                header: 'จัดการ',
+                accessorKey: 'actions',
+                cell: (row) => {
+                  const isPending = row.Status === 'Pending-Approve';
+                  const isActive = row.Status === 'Active';
+                  return (
+                    <div className="flex justify-end gap-2">
+                      {isPending && isAdmin && (
+                        <span className="text-[10px] text-amber-500/70 italic mr-2 border border-amber-500/20 px-2 py-1 rounded-md">รอการอนุมัติในศูนย์การอนุมัติ</span>
+                      )}
+                      {isActive && isAdmin && (
+                        <button onClick={(e) => { e.stopPropagation(); handleReturn(row.TransactionID); }} disabled={!!isProcessing} className="bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all">
+                          <RefreshCcw className={clsx("w-3 h-3", isProcessing === row.TransactionID && "animate-spin")} /> รับคืน
+                        </button>
+                      )}
+                    </div>
+                  )
+                }
+              }
+            ]}
+            data={filteredTransactions}
+            keyExtractor={(row) => row.TransactionID}
+            mobileCardTitleAccessor="EquipmentCode"
+            mobileActions={(row) => {
+              const isPending = row.Status === 'Pending-Approve';
+              const isActive = row.Status === 'Active';
+              return (
+                <div className="flex justify-end gap-2 mt-2">
+                  {isPending && isAdmin && (
+                    <span className="text-[10px] text-amber-500/70 italic mr-2 border border-amber-500/20 px-2 py-1 rounded-md">รออนุมัติ</span>
+                  )}
+                  {isActive && isAdmin && (
+                    <button onClick={(e) => { e.stopPropagation(); handleReturn(row.TransactionID); }} disabled={!!isProcessing} className="bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all">
+                      <RefreshCcw className={clsx("w-3 h-3", isProcessing === row.TransactionID && "animate-spin")} /> รับคืน
+                    </button>
+                  )}
+                </div>
+              )
+            }}
+          />
+        )}
       </div>
     </div>
   );
