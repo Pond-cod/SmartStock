@@ -429,7 +429,12 @@ function doPost(e) {
     
     const targetAction = reqRow[reqHeaders.indexOf('ActionType')];
     const targetSheetName = reqRow[reqHeaders.indexOf('TargetSheet')];
-    const targetPayload = JSON.parse(reqRow[reqHeaders.indexOf('Payload')]);
+    let targetPayload;
+    try {
+      targetPayload = JSON.parse(reqRow[reqHeaders.indexOf('Payload')]);
+    } catch (parseErr) {
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: "Malformed Payload JSON in request: " + reqId})).setMimeType(ContentService.MimeType.JSON);
+    }
     
     const targetActualName = nameMap[targetSheetName] || targetSheetName;
     const targetSheet = ss.getSheetByName(targetActualName);
@@ -458,6 +463,8 @@ function doPost(e) {
           if (targetPayload[h] !== undefined && h !== 'CreatedAt') expandedRowValues[i] = targetPayload[h];
         });
         targetSheet.getRange(targetIndex, 1, 1, headers.length).setValues([expandedRowValues]);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: "Record not found (may have been deleted)"})).setMimeType(ContentService.MimeType.JSON);
       }
     }
     else if (targetAction === 'DELETE') {
@@ -465,6 +472,8 @@ function doPost(e) {
       if (targetIndex > -1) {
         beforeData = getRowObject(targetSheet, targetIdField, targetPayload[targetIdField]);
         targetSheet.deleteRow(targetIndex);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: "Record not found (already deleted)"})).setMimeType(ContentService.MimeType.JSON);
       }
     }
 

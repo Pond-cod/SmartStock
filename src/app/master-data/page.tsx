@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { Plus, Edit2, Trash2, X, AlertCircle, Users, Building2, Save, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 export default function MasterDataPage() {
   const { personnel, departments, isLoading, createRecord, updateRecord, deleteRecord } = useData();

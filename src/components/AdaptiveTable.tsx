@@ -1,6 +1,5 @@
 import React from 'react';
 import clsx from 'clsx';
-import { MoreVertical } from 'lucide-react';
 
 export type ColumnDef<T> = {
   header: string;

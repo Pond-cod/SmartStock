@@ -9,7 +9,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import Link from 'next/link';
 import clsx from 'clsx';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
@@ -92,7 +92,7 @@ export default function DashboardPage() {
       <h2 className="text-xl font-bold text-red-800 mb-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</h2>
       <p className="text-sm text-red-500">{error}</p>
       <button onClick={refreshData} className="mt-4 btn-primary text-sm px-5 py-2.5 min-h-0">
-        <RefreshCw className="w-4 h-4" /> ลองใหมีกครั้ง
+        <RefreshCw className="w-4 h-4" /> ลองใหม่อีกครั้ง
       </button>
     </div>
   );

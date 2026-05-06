@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
-import { Search, Package, Send, Hash, MapPin, Layers, RefreshCw } from 'lucide-react';
+import { Search, Package, Send, Hash } from 'lucide-react';
 import IssueModal from '@/components/IssueModal';
 import clsx from 'clsx';
 

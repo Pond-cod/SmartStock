@@ -1,9 +1,9 @@
 "use client"
 import React, { useMemo } from 'react';
 import { useData } from '@/context/DataContext';
-import { Download, Printer, FileText, Package, BarChart3, AlertCircle } from 'lucide-react';
+import { Download, Printer, FileText, Package, BarChart3 } from 'lucide-react';
 import * as xlsx from 'xlsx';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 export default function ReportsPage() {
   const { equipments, isLoading } = useData();

@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import { Menu, Bell, LogOut, Wifi, WifiOff, Database, RefreshCw } from 'lucide-react';
+import { Menu, LogOut, Wifi, WifiOff, Database, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { useRouter } from 'next/navigation';

@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import { X, Send, User, ChevronRight, AlertCircle, Package, RefreshCw } from 'lucide-react';
+import { X, Send, Package, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
@@ -25,7 +25,7 @@ export default function IssueModal({ equipment, onClose }: IssueModalProps) {
   React.useEffect(() => {
     if (selectedPersonnelID) {
       const per = personnel.find(p => p.PersonnelID === selectedPersonnelID);
-      if (per && per.DepartmentID) setValue('ReceiverDepartment', per.DepartmentID);
+      if (per && per.department) setValue('ReceiverDepartment', per.department);
     }
   }, [selectedPersonnelID, personnel, setValue]);
 
@@ -36,7 +36,7 @@ export default function IssueModal({ equipment, onClose }: IssueModalProps) {
     const success = await issueAsset({
       EquipmentCode: equipment.EquipmentCode,
       Quantity: Number(data.Quantity),
-      ReceiverName: receiver ? receiver.Name : data.ReceiverID,
+      ReceiverName: receiver ? `${receiver.name || receiver.Name || ''} ${receiver.Surname || ''}`.trim() : data.ReceiverID,
       
       IssuerName: currentUser?.Username || 'system',
       ReturnDate: data.ReturnDate,
@@ -88,7 +88,7 @@ export default function IssueModal({ equipment, onClose }: IssueModalProps) {
             <label className="text-[10px] font-black uppercase text-slate-400 ml-1">ผู้รับพัสดุ</label>
             <select {...register('ReceiverID', { required: true })} className="w-full p-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-primary outline-none appearance-none">
               <option value="">-- เลือกผู้รับพัสดุ --</option>
-              {personnel.map(p => <option key={p.PersonnelID} value={p.PersonnelID}>{p.Name} ({p.Position})</option>)}
+              {personnel.map(p => <option key={p.PersonnelID} value={p.PersonnelID}>{p.name || p.Name} {p.Surname || ''} ({p['ตำแหน่ง'] || '-'})</option>)}
             </select>
           </div>
 

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { ShieldAlert, Clock, User, FileText, ChevronDown, ChevronUp, Database } from 'lucide-react';
 import clsx from 'clsx';
-// ... DiffVisualizer is the same
 
 function DiffVisualizer({ diffStr }: { diffStr: string }) {
   if (!diffStr) return <span className="text-sm text-slate-400 italic">ไม่มีข้อมูลการเปลี่ยนแปลง</span>;

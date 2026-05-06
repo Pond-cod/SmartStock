@@ -10,9 +10,8 @@ import Tooltip from '@/components/Tooltip';
 import * as XLSX from 'xlsx';
 import QRCodeModal from '@/components/QRCodeModal';
 import IssueModal from '@/components/IssueModal';
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 type EquipmentForm = {
   EquipmentCode: string;
@@ -216,7 +215,7 @@ export default function EquipmentsPage() {
     // Prevent race condition: if it timed out, the background GAS is linking it. 
     // If we send the old ImageURL now, it might overwrite the GAS linked one.
     if (imageFile && optimisticTimeout) {
-      delete (finalData as any).ImageURL;
+      delete finalData.ImageURL;
     }
 
     const res = editingEq ? await updateRecord('Equipments', finalData) : await createRecord('Equipments', finalData);

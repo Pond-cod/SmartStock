@@ -7,7 +7,7 @@ import { Plus, Edit2, Trash2, X, AlertCircle, Users as UsersIcon, Eye, EyeOff, K
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 type UserForm = {
   Username: string;

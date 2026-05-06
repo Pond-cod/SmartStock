@@ -3,13 +3,12 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { History, ArrowUpRight, ArrowDownLeft, Calendar, User as UserIcon, Search, Filter, RefreshCcw, CheckCircle2, Clock, Package, AlertCircle, X } from 'lucide-react';
+import { History, ArrowUpRight, ArrowDownLeft, Search, RefreshCcw, Clock, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
-import Tooltip from '@/components/Tooltip';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 export default function TransactionsPage() {
-  const { transactions, equipments, returnAsset, approveTransaction, rejectTransaction, isLoading } = useData();
+  const { transactions, equipments, returnAsset, isLoading } = useData();
   const { currentUser } = useAuth();
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,25 +37,6 @@ export default function TransactionsPage() {
       const success = await returnAsset(txId);
       if (success) toast.success('รับคืนพัสดุและอัปเดตสต็อกเรียบร้อยแล้ว');
       else toast.error('เกิดข้อผิดพลาดในการรับคืน');
-      setIsProcessing(null);
-    }
-  };
-
-  const handleApprove = async (txId: string) => {
-    if (confirm('อนุมัติรายการเบิกพัสดุนี้? ระบบจะหักจำนวนออกจากสต็อกทันที')) {
-      setIsProcessing(txId);
-      const success = await approveTransaction(txId);
-      if (success) toast.success('อนุมัติรายการเบิกพัสดุสำเร็จ');
-      else toast.error('ไม่สามารถอนุมัติได้ กรุณาลองใหม่อีกครั้ง');
-      setIsProcessing(null);
-    }
-  };
-
-  const handleReject = async (txId: string) => {
-    if (confirm('ปฏิเสธรายการเบิกนี้? รายการจะถูกลบออกจากระบบ')) {
-      setIsProcessing(txId);
-      const success = await rejectTransaction(txId);
-      if (success) toast.success('ยกเลิกรายการเบิกเรียบร้อยแล้ว');
       setIsProcessing(null);
     }
   };
@@ -90,7 +70,7 @@ export default function TransactionsPage() {
         </div>
         <div className="flex gap-2">
           {['ALL', 'PENDING', 'ISSUE', 'RETURN'].map((type) => (
-            <button key={type} onClick={() => setFilterType(type as any)} className={clsx("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", filterType === type ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+            <button key={type} onClick={() => setFilterType(type as 'ALL' | 'PENDING' | 'ISSUE' | 'RETURN')} className={clsx("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", filterType === type ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
               {type === 'ALL' ? 'ทั้งหมด' : type === 'PENDING' ? 'รออนุมัติ' : type === 'ISSUE' ? 'การเบิก' : 'การคืน'}
             </button>
           ))}

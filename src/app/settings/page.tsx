@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { Settings, Palette, Sun, Moon, AlertCircle, Save, RefreshCw, ShieldCheck, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 

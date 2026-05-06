@@ -110,7 +110,7 @@ export default function ChangePasswordPage() {
                 </div>
                 {errors.newPassword && (
                     <p className="text-xs text-red-500 font-medium ml-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3"/> {(errors.newPassword as any).message}
+                        <AlertCircle className="w-3 h-3"/> {errors.newPassword?.message?.toString()}
                     </p>
                 )}
               </div>
@@ -133,7 +133,7 @@ export default function ChangePasswordPage() {
                 </div>
                 {errors.confirmPassword && (
                     <p className="text-xs text-red-500 font-medium ml-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3"/> {(errors.confirmPassword as any).message}
+                        <AlertCircle className="w-3 h-3"/> {errors.confirmPassword?.message?.toString()}
                     </p>
                 )}
               </div>

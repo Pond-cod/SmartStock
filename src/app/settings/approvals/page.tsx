@@ -258,7 +258,8 @@ export default function ApprovalCenterPage() {
 
           {filteredRequests.map((req) => {
             const act = getActionLabel(req.ActionType);
-            const payload = JSON.parse(req.Payload);
+            let payload: any = {};
+            try { payload = JSON.parse(req.Payload); } catch { payload = {}; }
             const itemName = payload.Name || payload.CategoryName || payload.PersonnelID || payload.DepartmentName || payload.Username || 'ข้อมูลทั่วไป';
 
             return (

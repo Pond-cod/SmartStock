@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
 import { Shield, Plus, Save, Trash2, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
-import AdaptiveTable, { ColumnDef } from '@/components/AdaptiveTable';
+import AdaptiveTable from '@/components/AdaptiveTable';
 
 const MODULES = [
   { id: 'Dashboard', name: 'แดชบอร์ด' },
