@@ -210,7 +210,7 @@ export default function EquipmentsPage() {
       }
     }
     
-    const finalData = { ...data, ImageURL: finalImageUrl };
+    const finalData: Record<string, any> = { ...data, ImageURL: finalImageUrl };
     
     // Prevent race condition: if it timed out, the background GAS is linking it. 
     // If we send the old ImageURL now, it might overwrite the GAS linked one.

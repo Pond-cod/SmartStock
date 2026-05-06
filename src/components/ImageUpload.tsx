@@ -93,6 +93,7 @@ export default function ImageUpload({ onImageUploaded, defaultImage }: ImageUplo
     <div className="flex flex-col items-center space-y-4">
       {preview ? (
         <div className="relative w-48 h-48 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Preview" className="w-full h-full object-cover" />
           {!isUploading && (
             <button

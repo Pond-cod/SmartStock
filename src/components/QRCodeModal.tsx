@@ -41,6 +41,7 @@ export default function QRCodeModal({ equipment, allEquipments = [], onClose }: 
         </div>
         <div className="p-10 flex flex-col items-center text-center space-y-6">
           <div className="p-4 bg-white rounded-3xl border-4 border-slate-100 shadow-inner">
+             {/* eslint-disable-next-line @next/next/no-img-element */}
              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${currentEq.EquipmentCode}`} alt="QR" className="w-48 h-48" />
           </div>
           <div>
